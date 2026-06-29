@@ -266,7 +266,12 @@ export default function App() {
       }
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Authentication failed.');
+      if (err.code === 'auth/popup-closed-by-user') {
+        // User closed the popup, silently ignore or just log
+        console.log('Login popup closed by user.');
+      } else {
+        showToast(err.message || 'Authentication failed.');
+      }
     }
   };
 
