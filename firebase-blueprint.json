@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "Review": {
+      "title": "Review",
+      "description": "A review for a house.",
+      "type": "object",
+      "properties": {
+        "authorName": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "date": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" }
+      },
+      "required": ["authorName", "date", "rating", "comment"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "A message from a guest to the host.",
+      "type": "object",
+      "properties": {
+        "guestName": { "type": "string" },
+        "guestEmail": { "type": "string" },
+        "houseName": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "date": { "type": "string" },
+        "read": { "type": "boolean" },
+        "replied": { "type": "boolean" }
+      },
+      "required": ["guestName", "guestEmail", "houseName", "subject", "message", "date", "read"]
+    },
+    "PastBooking": {
+      "title": "Past Booking",
+      "description": "Records that a guest has stayed at a house, allowing them to review.",
+      "type": "object",
+      "properties": {
+        "guestEmail": { "type": "string" },
+        "houseId": { "type": "string" }
+      },
+      "required": ["guestEmail", "houseId"]
+    }
+  },
+  "firestore": {
+    "/houses/{houseId}/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Reviews for a specific house."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Message inquiries sent by guests."
+    },
+    "/pastBookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/PastBooking" },
+      "description": "Past bookings to verify review eligibility."
+    }
+  }
+}

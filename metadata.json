@@ -1,0 +1,6 @@
+{
+  "name": "Mila Nomad Rooms",
+  "description": "A responsive boutique accommodation prototype for Gran Canaria stays in Las Palmas and Tafira, featuring interactive booking calendars, reviews, inquiry channels, and host dashboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

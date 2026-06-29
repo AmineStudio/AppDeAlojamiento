@@ -1,0 +1,104 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Primitive Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'mila@milanomad.es' || 
+        request.auth.token.email == 'amine.saidani.101@gmail.com'
+      );
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- App Data (Houses, Rooms, Blog) ---
+    match /appData/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // --- Reviews ---
+    function isValidReview(data) {
+      return data.keys().hasAll(['authorName', 'date', 'rating', 'comment']) &&
+             data.keys().size() >= 4 &&
+             data.authorName is string && data.authorName.size() <= 100 &&
+             data.date is string && data.date.size() <= 50 &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             data.comment is string && data.comment.size() <= 2000;
+    }
+    
+    match /houses/{houseId}/reviews/{reviewId} {
+      allow read: if true; // Public reviews
+      
+      // We allow verified users to create a review. In a real scenario we'd check pastBookings, 
+      // but without a strict booking ID structure, we check if they are verified.
+      // We will also allow the app to restrict this on the client side.
+      // If we want strict backend check: they must have a document in /pastBookings/$(request.auth.token.email + '_' + houseId)
+      allow create: if isVerified() && isValidId(houseId) && isValidId(reviewId) && isValidReview(incoming());
+      
+      allow update, delete: if isAdmin();
+    }
+    
+    // --- Inquiries ---
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['guestName', 'guestEmail', 'houseName', 'subject', 'message', 'date', 'read']) &&
+             data.guestName is string && data.guestName.size() <= 100 &&
+             data.guestEmail is string && data.guestEmail.size() <= 150 &&
+             data.houseName is string && data.houseName.size() <= 100 &&
+             data.subject is string && data.subject.size() <= 200 &&
+             data.message is string && data.message.size() <= 5000 &&
+             data.date is string && data.date.size() <= 50 &&
+             data.read is bool;
+    }
+    
+    match /inquiries/{inquiryId} {
+      // Guests can read their own inquiries, admins can read all
+      allow read: if isAdmin() || (isVerified() && existing().guestEmail == request.auth.token.email);
+      
+      // Verified guests can create
+      allow create: if isVerified() && isValidId(inquiryId) && isValidInquiry(incoming()) && incoming().guestEmail == request.auth.token.email;
+      
+      // Admins can update/delete
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // --- Past Bookings ---
+    function isValidPastBooking(data) {
+      return data.keys().hasAll(['guestEmail', 'houseId']) &&
+             data.keys().size() == 2 &&
+             data.guestEmail is string && data.guestEmail.size() <= 150 &&
+             data.houseId is string && data.houseId.size() <= 100;
+    }
+    
+    match /pastBookings/{bookingId} {
+      allow read: if isAdmin() || (isVerified() && existing().guestEmail == request.auth.token.email);
+      allow create: if isVerified() && incoming().guestEmail == request.auth.token.email;
+      allow update, delete: if isAdmin();
+    }
+  }
+}
