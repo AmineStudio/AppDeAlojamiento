@@ -1,4 +1,13 @@
-import { House, Room, GuestReview, MessageInquiry, BlogPost } from './types';
+import { House, Room, GuestReview, MessageInquiry, BlogPost, HostProfile } from './types';
+
+export const initialHostProfile: HostProfile = {
+  name: "Mila",
+  title: "Host Mila",
+  bio: "Born and raised in Gran Canaria. Surfer, lover of island history, and always happy to coordinate local excursions or set up workspace desks.",
+  phone: "+34 928 123 456",
+  email: "hola@milanomad.es",
+  address: "Calle de León y Castillo 48, Las Palmas"
+};
 
 export const initialHouses: House[] = [
   {

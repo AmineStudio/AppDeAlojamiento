@@ -1,6 +1,6 @@
 import React from 'react';
 import { Lock, Plus, X, Send } from 'lucide-react';
-import { House, Room, MessageInquiry } from '../types';
+import { House, Room, MessageInquiry, HostProfile } from '../types';
 
 interface DashboardViewProps {
   user: { name: string; email: string; role: 'guest' | 'host' } | null;
@@ -11,10 +11,14 @@ interface DashboardViewProps {
   setInquiries: React.Dispatch<React.SetStateAction<MessageInquiry[]>>;
   toggleInquiryRead: (id: string) => void;
   houses: House[];
+  hostProfile: HostProfile;
+  setHostProfile: React.Dispatch<React.SetStateAction<HostProfile>>;
   selectedHouseId: string;
   setSelectedHouseId: (id: string) => void;
   activeHouse: House;
   roomsByHouse: Record<string, Room[]>;
+  setHouses: React.Dispatch<React.SetStateAction<House[]>>;
+  setRoomsByHouse: React.Dispatch<React.SetStateAction<Record<string, Room[]>>>;
   editPricePrefix: Record<string, number>;
   setEditPricePrefix: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   toggleRoomAvailableOnDash: (roomId: string) => void;
@@ -34,6 +38,7 @@ interface DashboardViewProps {
   setNewBlogContent: (content: string) => void;
   handlePublishStory: () => void;
   handleReplyInquiry: (id: string, message: string, role: 'host' | 'guest') => void;
+  handleNavigate: (page: string, params?: { houseId?: string, blogId?: string }) => void;
 }
 
 export function DashboardView({
@@ -45,10 +50,14 @@ export function DashboardView({
   setInquiries,
   toggleInquiryRead,
   houses,
+  hostProfile,
+  setHostProfile,
   selectedHouseId,
   setSelectedHouseId,
   activeHouse,
   roomsByHouse,
+  setHouses,
+  setRoomsByHouse,
   editPricePrefix,
   setEditPricePrefix,
   toggleRoomAvailableOnDash,
@@ -67,7 +76,8 @@ export function DashboardView({
   newBlogContent,
   setNewBlogContent,
   handlePublishStory,
-  handleReplyInquiry
+  handleReplyInquiry,
+  handleNavigate
 }: DashboardViewProps) {
   const [activeInquiryId, setActiveInquiryId] = React.useState<string | null>(null);
   const [replyText, setReplyText] = React.useState('');
@@ -80,6 +90,18 @@ export function DashboardView({
       setReplyText('');
     }
   };
+
+  const handleChangeHouseField = (field: keyof House, value: any) => {
+    setHouses(prev => prev.map(h => h.id === activeHouse.id ? { ...h, [field]: value } : h));
+  };
+
+  const handleChangeRoomField = (roomId: string, field: keyof Room, value: any) => {
+    setRoomsByHouse(prev => ({
+      ...prev,
+      [activeHouse.id]: (prev[activeHouse.id] || []).map(r => r.id === roomId ? { ...r, [field]: value } : r)
+    }));
+  };
+
   return (
     <div className="animate-fade-in py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Locked alert graphic state */}
@@ -193,51 +215,81 @@ export function DashboardView({
                       <h3 className="font-display font-medium text-xl text-[#3F434D]">{activeHouse.name}</h3>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[#3D7A95]">{activeHouse.location}</span>
                     </div>
-                    <button className="py-2 px-5 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] rounded-full text-[10px] font-bold uppercase tracking-wider text-[#3F434D]">
+                    <button onClick={() => handleNavigate('detail', { houseId: activeHouse.id })} className="py-2 px-5 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] rounded-full text-[10px] font-bold uppercase tracking-wider text-[#3F434D]">
                       Preview stay
                     </button>
+                  </div>
+
+                  <div className="mb-8 space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">House Description</label>
+                      <textarea 
+                        value={activeHouse.description}
+                        onChange={(e) => handleChangeHouseField('description', e.target.value)}
+                        className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none min-h-[90px] resize-vertical"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Home Amenities (comma separated)</label>
+                      <input 
+                        type="text" 
+                        value={activeHouse.features.join(', ')}
+                        onChange={(e) => handleChangeHouseField('features', e.target.value.split(',').map(s => s.trim()).filter(s => s))}
+                        className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none"
+                      />
+                    </div>
                   </div>
 
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-3">Room pricing & active availability</label>
                   <div className="space-y-4">
                     {(roomsByHouse[activeHouse.id] || []).map((r) => (
-                      <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#FBF7EC] border border-[rgba(63,67,77,0.04)]">
-                        <div className="flex items-center gap-4">
-                          <img src={r.images[0]} className="h-12 w-16 object-cover rounded-xl" alt="" />
-                          <div>
-                            <h6 className="font-display font-medium text-xs text-[#3F434D]">{r.name}</h6>
-                            <p className="text-[9px] text-[#6E727C] uppercase tracking-wider mt-0.5">{r.beds} · {r.view}</p>
+                      <div key={r.id} className="flex flex-col gap-4 p-4 rounded-2xl bg-[#FBF7EC] border border-[rgba(63,67,77,0.04)]">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-center gap-4">
+                            <img src={r.images[0]} className="h-12 w-16 object-cover rounded-xl" alt="" />
+                            <div>
+                              <h6 className="font-display font-medium text-xs text-[#3F434D]">{r.name}</h6>
+                              <p className="text-[9px] text-[#6E727C] uppercase tracking-wider mt-0.5">{r.beds} · {r.view}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 self-end sm:self-auto">
+                            <div className="flex items-center gap-1 bg-white border border-[rgba(63,67,77,0.1)] rounded-xl px-3 py-1.5 w-24">
+                              <span className="text-xs text-[#6E727C]">€</span>
+                              <input 
+                                type="number" 
+                                value={editPricePrefix[r.id] !== undefined ? editPricePrefix[r.id] : r.price}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditPricePrefix(prev => ({
+                                    ...prev,
+                                    [r.id]: val === '' ? 0 : Number(val)
+                                  }));
+                                }}
+                                className="w-full bg-transparent text-xs font-bold text-[#3F434D] outline-none"
+                              />
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => toggleRoomAvailableOnDash(r.id)}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${r.available ? 'bg-[#A7AB5E]' : 'bg-[#6E727C]'}`}
+                              >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${r.available ? 'translate-x-6' : 'translate-x-1'}`} />
+                              </button>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E727C]">
+                                {r.available ? 'Free' : 'Booked'}
+                              </span>
+                            </div>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-4 self-end sm:self-auto">
-                          <div className="flex items-center gap-1 bg-white border border-[rgba(63,67,77,0.1)] rounded-xl px-3 py-1.5 w-24">
-                            <span className="text-xs text-[#6E727C]">€</span>
-                            <input 
-                              type="number" 
-                              value={editPricePrefix[r.id] !== undefined ? editPricePrefix[r.id] : r.price}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setEditPricePrefix(prev => ({
-                                  ...prev,
-                                  [r.id]: val === '' ? 0 : Number(val)
-                                }));
-                              }}
-                              className="w-full bg-transparent text-xs font-bold text-[#3F434D] outline-none"
-                            />
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <button 
-                              onClick={() => toggleRoomAvailableOnDash(r.id)}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${r.available ? 'bg-[#A7AB5E]' : 'bg-[#6E727C]'}`}
-                            >
-                              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${r.available ? 'translate-x-6' : 'translate-x-1'}`} />
-                            </button>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E727C]">
-                              {r.available ? 'Free' : 'Booked'}
-                            </span>
-                          </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Room Description</label>
+                          <textarea 
+                            value={r.description}
+                            onChange={(e) => handleChangeRoomField(r.id, 'description', e.target.value)}
+                            className="w-full bg-white border border-[rgba(63,67,77,0.08)] py-2 px-3 rounded-xl text-xs outline-none min-h-[60px] resize-vertical"
+                          />
                         </div>
                       </div>
                     ))}
@@ -479,20 +531,64 @@ export function DashboardView({
               </div>
 
               <div className="border-t border-[rgba(63,67,77,0.08)] pt-6">
-                <h3 className="font-display font-medium text-xl text-[#3F434D] mb-4">Edit Host bio profile</h3>
+                <h3 className="font-display font-medium text-xl text-[#3F434D] mb-4">Edit Host bio & contact</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Host Name</label>
-                    <input type="text" value="Mila" disabled className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none opacity-60" />
+                    <input 
+                      type="text" 
+                      value={hostProfile.name} 
+                      onChange={(e) => setHostProfile(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Host Title</label>
+                    <input 
+                      type="text" 
+                      value={hostProfile.title} 
+                      onChange={(e) => setHostProfile(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none" 
+                    />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Host bio</label>
                     <textarea 
-                      defaultValue="Born and raised in Gran Canaria. Surfer, cook, and hopeless romantic about this volcano island." 
+                      value={hostProfile.bio} 
+                      onChange={(e) => setHostProfile(prev => ({ ...prev, bio: e.target.value }))}
                       className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none min-h-[90px] resize-vertical"
                     />
                   </div>
-                  <button onClick={() => showToast('✔️ Profile bio updated successfully.')} className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#3F434D] text-[#FBF7EC]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Phone Number</label>
+                      <input 
+                        type="text" 
+                        value={hostProfile.phone} 
+                        onChange={(e) => setHostProfile(prev => ({ ...prev, phone: e.target.value }))}
+                        className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Email Address</label>
+                      <input 
+                        type="email" 
+                        value={hostProfile.email} 
+                        onChange={(e) => setHostProfile(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none" 
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Address</label>
+                    <input 
+                      type="text" 
+                      value={hostProfile.address} 
+                      onChange={(e) => setHostProfile(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none" 
+                    />
+                  </div>
+                  <button onClick={() => showToast('✔️ Profile bio & contact updated successfully.')} className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#3F434D] text-[#FBF7EC]">
                     Update profile
                   </button>
                 </div>

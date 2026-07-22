@@ -1,8 +1,9 @@
 import React from 'react';
-import { House } from '../types';
+import { House, HostProfile } from '../types';
 
 interface ContactViewProps {
   houses: House[];
+  hostProfile: HostProfile;
   contactName: string;
   setContactName: (name: string) => void;
   contactEmail: string;
@@ -18,6 +19,7 @@ interface ContactViewProps {
 
 export function ContactView({
   houses,
+  hostProfile,
   contactName,
   setContactName,
   contactEmail,
@@ -37,32 +39,34 @@ export function ContactView({
         {/* Host bio & intro */}
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">Direct Communication</span>
-          <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">Ask Mila</h1>
+          <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">Ask {hostProfile.name}</h1>
           <p className="text-sm font-light text-[#6E727C] leading-relaxed mt-4 mb-8">
             Have inquiries about property availability, long-term nomad relocation discounts, or the neighborhood guidelines in Las Palmas or Tafira? Drop a letter.
           </p>
 
           <div className="flex gap-4 p-5 bg-[#F5EFE0] rounded-3xl border border-[rgba(63,67,77,0.06)] mb-6">
-            <div className="h-12 w-12 text-md rounded-full bg-[#A7AB5E] text-white flex items-center justify-center font-bold">M</div>
+            <div className="h-12 w-12 text-md rounded-full bg-[#A7AB5E] text-white flex items-center justify-center font-bold">
+              {hostProfile.name.charAt(0).toUpperCase()}
+            </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#3F434D]">Host Mila</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#3F434D]">{hostProfile.title}</h4>
               <p className="text-xs font-light text-[#6E727C] mt-1 leading-relaxed">
-                Born and raised in Gran Canaria. Surfer, lover of island history, and always happy to coordinate local excursions or set up workspace desks.
+                {hostProfile.bio}
               </p>
             </div>
           </div>
 
           <div className="text-xs text-[#3F434D] font-semibold space-y-2 bg-white border border-[rgba(63,67,77,0.06)] p-5 rounded-3xl">
-            <div>📞 +34 928 123 456</div>
-            <div>✉️ hola@milanomad.es</div>
-            <div className="text-[#6E727C] font-normal">Calle de León y Castillo 48, Las Palmas</div>
+            <div>📞 {hostProfile.phone}</div>
+            <div>✉️ {hostProfile.email}</div>
+            <div className="text-[#6E727C] font-normal">{hostProfile.address}</div>
           </div>
         </div>
 
         {/* Inquiry form block */}
         <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-8 shadow-xl">
           <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">Send a message</h3>
-          <p className="text-xs text-[#6E727C] mb-6">We will notify Mila and she will get back to you shortly.</p>
+          <p className="text-xs text-[#6E727C] mb-6">We will notify {hostProfile.name} and they will get back to you shortly.</p>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

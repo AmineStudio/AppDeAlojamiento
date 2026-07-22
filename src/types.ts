@@ -53,6 +53,15 @@ export interface MessageInquiry {
   thread?: { id: string; sender: 'host' | 'guest'; message: string; date: string }[];
 }
 
+export interface HostProfile {
+  name: string;
+  title: string;
+  bio: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
 export interface BlogPost {
   id: string;
   category: string;

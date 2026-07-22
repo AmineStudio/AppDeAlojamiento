@@ -35,8 +35,8 @@ import {
   Menu
 } from 'lucide-react';
 
-import { initialHouses, initialRooms, initialReviews, initialInquiries, initialBlogPosts } from './data';
-import { House, Room, GuestReview, MessageInquiry, BlogPost } from './types';
+import { initialHouses, initialRooms, initialReviews, initialInquiries, initialBlogPosts, initialHostProfile } from './data';
+import { House, Room, GuestReview, MessageInquiry, BlogPost, HostProfile } from './types';
 import { MilaLogo } from './components/MilaLogo';
 import { Footer } from './components/Footer';
 import { Navigation } from './components/Navigation';
@@ -67,6 +67,7 @@ export default function App() {
   const [reviewsByHouse, setReviewsByHouse] = useState<Record<string, GuestReview[]>>(initialReviews);
   const [inquiries, setInquiries] = useState<MessageInquiry[]>(initialInquiries);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(initialBlogPosts);
+  const [hostProfile, setHostProfile] = useState<HostProfile>(initialHostProfile);
   const [pastBookings, setPastBookings] = useState<{guestEmail: string, houseId: string}[]>([
     { guestEmail: 'guest@example.com', houseId: 'leon-y-castillo' },
     { guestEmail: 'amine.saidani.101@gmail.com', houseId: 'leon-y-castillo' }
@@ -161,6 +162,7 @@ export default function App() {
           if (data.houses) setHouses(data.houses);
           if (data.roomsByHouse) setRoomsByHouse(data.roomsByHouse);
           if (data.blogPosts) setBlogPosts(data.blogPosts);
+          if (data.hostProfile) setHostProfile(data.hostProfile);
         }
       } catch (err) {
         console.error("Failed to load app data from Firestore", err);
@@ -172,12 +174,13 @@ export default function App() {
   }, []);
 
   // Save app data to Firestore
-  const saveAppData = async (newHouses: House[], newRooms: Record<string, Room[]>, newBlogPosts: BlogPost[]) => {
+  const saveAppData = async (newHouses: House[], newRooms: Record<string, Room[]>, newBlogPosts: BlogPost[], newHostProfile: HostProfile) => {
     try {
       await setDoc(doc(db, 'appData/main'), {
         houses: newHouses,
         roomsByHouse: newRooms,
-        blogPosts: newBlogPosts
+        blogPosts: newBlogPosts,
+        hostProfile: newHostProfile
       });
     } catch (err) {
       console.error("Failed to save app data", err);
@@ -186,9 +189,9 @@ export default function App() {
 
   useEffect(() => {
     if (isAppDataLoaded && user && user.role === 'host') {
-      saveAppData(houses, roomsByHouse, blogPosts);
+      saveAppData(houses, roomsByHouse, blogPosts, hostProfile);
     }
-  }, [houses, roomsByHouse, blogPosts, user, isAppDataLoaded]);
+  }, [houses, roomsByHouse, blogPosts, hostProfile, user, isAppDataLoaded]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(firebaseUser => {
@@ -196,7 +199,7 @@ export default function App() {
         if (firebaseUser.emailVerified) {
           const email = firebaseUser.email || '';
           const name = firebaseUser.displayName || email.split('@')[0];
-          const role = (email === 'mila@milanomad.es' || email === 'amine.saidani.101@gmail.com') ? 'host' : 'guest';
+          const role = (email === 'mila@milanomad.es' || email === 'amine.saidani.101@gmail.com' || email === 'milalotiairbnb@gmail.com') ? 'host' : 'guest';
           setUser({ name, email, role });
         } else {
           // Keep them logged out until they verify
@@ -251,28 +254,6 @@ export default function App() {
   // Auth Handling
   const triggerLoginModal = () => {
     setLoginModalOpen(true);
-  };
-
-  const submitAuth = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      setLoginModalOpen(false);
-      const email = userCredential.user.email?.toLowerCase();
-      if (email === 'mila@milanomad.es' || email === 'amine.saidani.101@gmail.com') {
-        showToast('Welcome back, Admin! ☀️ Open Dashboard to manage your stays.');
-      } else {
-        showToast(`Welcome! Feel free to explore and request stays.`);
-      }
-    } catch (err: any) {
-      console.error(err);
-      if (err.code === 'auth/popup-closed-by-user') {
-        // User closed the popup, silently ignore or just log
-        console.log('Login popup closed by user.');
-      } else {
-        showToast(err.message || 'Authentication failed.');
-      }
-    }
   };
 
   const executeSignOut = async () => {
@@ -730,7 +711,7 @@ export default function App() {
               <div className="h-10 w-10 text-md rounded-full bg-white flex items-center justify-center shadow-sm">⭐</div>
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#3F434D]">We want to hear from you!</h4>
-                <p className="text-xs text-[#6E727C] mt-0.5">Let Mila know how your recent stay at Boutique Urban Loft León y Castillo was.</p>
+                <p className="text-xs text-[#6E727C] mt-0.5">Let Mila know how your recent stay at Urban Loft León y Castillo was.</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -795,7 +776,8 @@ export default function App() {
         {/* 4. CONTACT / QUESTION VIEW */}
         {currentPage === 'contact' && (
           <ContactView 
-            houses={initialHouses} 
+            houses={initialHouses}
+            hostProfile={hostProfile}
             contactName={contactName}
             setContactName={setContactName}
             contactEmail={contactEmail}
@@ -820,11 +802,15 @@ export default function App() {
             inquiries={inquiries}
             setInquiries={setInquiries}
             toggleInquiryRead={toggleInquiryRead}
-            houses={initialHouses}
+            houses={houses}
+            hostProfile={hostProfile}
+            setHostProfile={setHostProfile}
             selectedHouseId={selectedHouseId}
             setSelectedHouseId={setSelectedHouseId}
             activeHouse={activeHouse!}
             roomsByHouse={roomsByHouse}
+            setHouses={setHouses}
+            setRoomsByHouse={setRoomsByHouse}
             editPricePrefix={editPricePrefix}
             setEditPricePrefix={setEditPricePrefix}
             toggleRoomAvailableOnDash={toggleRoomAvailableOnDash}
@@ -844,6 +830,7 @@ export default function App() {
             setNewBlogContent={setNewBlogContent}
             handlePublishStory={handlePublishStory}
             handleReplyInquiry={handleReplyInquiry}
+            handleNavigate={handleNavigate}
           />
         )}
         {/* 6. GUEST INBOX VIEW */}
@@ -860,7 +847,7 @@ export default function App() {
       <LoginModal 
         loginModalOpen={loginModalOpen}
         setLoginModalOpen={setLoginModalOpen}
-        submitAuth={submitAuth}
+        showToast={showToast}
       />
 
       {/* Photo Modal overlay */}
