@@ -105,15 +105,13 @@ export function DashboardView({
   };
 
   const handleDeleteStory = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this story?')) {
-      setBlogPosts(prev => prev.filter(b => b.id !== id));
-      showToast('✔️ Story deleted successfully.');
-      if (editingBlogId === id) {
-        setEditingBlogId(null);
-        setNewBlogTitle('');
-        setNewBlogExcerpt('');
-        setNewBlogContent('');
-      }
+    setBlogPosts(prev => prev.filter(b => b.id !== id));
+    showToast('✔️ Story deleted successfully.');
+    if (editingBlogId === id) {
+      setEditingBlogId(null);
+      setNewBlogTitle('');
+      setNewBlogExcerpt('');
+      setNewBlogContent('');
     }
   };
 
