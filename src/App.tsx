@@ -803,6 +803,8 @@ export default function App() {
             setInquiries={setInquiries}
             toggleInquiryRead={toggleInquiryRead}
             houses={houses}
+            blogPosts={blogPosts}
+            setBlogPosts={setBlogPosts}
             hostProfile={hostProfile}
             setHostProfile={setHostProfile}
             selectedHouseId={selectedHouseId}

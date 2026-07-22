@@ -1,6 +1,6 @@
 import React from 'react';
 import { Lock, Plus, X, Send } from 'lucide-react';
-import { House, Room, MessageInquiry, HostProfile } from '../types';
+import { House, Room, MessageInquiry, HostProfile, BlogPost } from '../types';
 
 interface DashboardViewProps {
   user: { name: string; email: string; role: 'guest' | 'host' } | null;
@@ -11,6 +11,8 @@ interface DashboardViewProps {
   setInquiries: React.Dispatch<React.SetStateAction<MessageInquiry[]>>;
   toggleInquiryRead: (id: string) => void;
   houses: House[];
+  blogPosts: BlogPost[];
+  setBlogPosts: React.Dispatch<React.SetStateAction<BlogPost[]>>;
   hostProfile: HostProfile;
   setHostProfile: React.Dispatch<React.SetStateAction<HostProfile>>;
   selectedHouseId: string;
@@ -50,6 +52,8 @@ export function DashboardView({
   setInquiries,
   toggleInquiryRead,
   houses,
+  blogPosts,
+  setBlogPosts,
   hostProfile,
   setHostProfile,
   selectedHouseId,
@@ -81,6 +85,7 @@ export function DashboardView({
 }: DashboardViewProps) {
   const [activeInquiryId, setActiveInquiryId] = React.useState<string | null>(null);
   const [replyText, setReplyText] = React.useState('');
+  const [editingBlogId, setEditingBlogId] = React.useState<string | null>(null);
 
   const activeInquiry = inquiries.find(inq => inq.id === activeInquiryId) || inquiries[0];
 
@@ -88,6 +93,51 @@ export function DashboardView({
     if (activeInquiry && replyText.trim()) {
       handleReplyInquiry(activeInquiry.id, replyText, 'host');
       setReplyText('');
+    }
+  };
+
+  const handleEditStory = (blog: BlogPost) => {
+    setEditingBlogId(blog.id);
+    setNewBlogTitle(blog.title);
+    setNewBlogCategory(blog.category);
+    setNewBlogExcerpt(blog.excerpt);
+    setNewBlogContent(blog.content);
+  };
+
+  const handleDeleteStory = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this story?')) {
+      setBlogPosts(prev => prev.filter(b => b.id !== id));
+      showToast('✔️ Story deleted successfully.');
+      if (editingBlogId === id) {
+        setEditingBlogId(null);
+        setNewBlogTitle('');
+        setNewBlogExcerpt('');
+        setNewBlogContent('');
+      }
+    }
+  };
+
+  const handleSaveStory = () => {
+    if (!newBlogTitle.trim() || !newBlogContent.trim()) {
+      showToast('Please fill in a title and the content story.');
+      return;
+    }
+
+    if (editingBlogId) {
+      setBlogPosts(prev => prev.map(b => b.id === editingBlogId ? {
+        ...b,
+        category: newBlogCategory,
+        title: newBlogTitle,
+        excerpt: newBlogExcerpt || newBlogContent.substring(0, 150) + '...',
+        content: newBlogContent,
+      } : b));
+      showToast('✔️ Story updated successfully.');
+      setEditingBlogId(null);
+      setNewBlogTitle('');
+      setNewBlogExcerpt('');
+      setNewBlogContent('');
+    } else {
+      handlePublishStory();
     }
   };
 
@@ -448,61 +498,103 @@ export function DashboardView({
 
           {/* Tab C: story publication */}
           {dashActiveTab === 'stories' && (
-            <div className="max-w-3xl bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 shadow-xl">
-              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">Publish a local story</h3>
-              <p className="text-xs text-[#6E727C] mb-6">Write custom travel articles, local restaurant guides or mountain hiking paths.</p>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Article Title</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Best Seafood spots in Las Palmas" 
-                    value={newBlogTitle}
-                    onChange={(e) => setNewBlogTitle(e.target.value)}
-                    className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Category</label>
-                    <select 
-                      value={newBlogCategory}
-                      onChange={(e) => setNewBlogCategory(e.target.value)}
-                      className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3.5 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
-                    >
-                      <option value="Local secrets 🤫">Local secrets 🤫</option>
-                      <option value="Food & Wine 🍷">Food & Wine 🍷</option>
-                      <option value="House stories 🏡">House stories 🏡</option>
-                      <option value="Adventure Trails 🧗">Adventure Trails 🧗</option>
-                    </select>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 shadow-xl h-fit">
+                <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-4">Existing Stories</h3>
+                {blogPosts.length === 0 ? (
+                  <p className="text-xs text-[#6E727C]">No stories published yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {blogPosts.map(blog => (
+                      <div key={blog.id} className="p-4 border border-[rgba(63,67,77,0.08)] rounded-2xl flex flex-col gap-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase text-[#A7AB5E]">{blog.category}</span>
+                            <h4 className="font-bold text-sm text-[#3F434D]">{blog.title}</h4>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => handleEditStory(blog)} className="text-xs text-[#6E727C] hover:text-[#3D7A95] font-semibold">Edit</button>
+                            <button onClick={() => handleDeleteStory(blog.id)} className="text-xs text-[#6E727C] hover:text-red-500 font-semibold">Delete</button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-[#6E727C] line-clamp-2">{blog.excerpt}</p>
+                      </div>
+                    ))}
                   </div>
+                )}
+              </div>
+
+              <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 shadow-xl h-fit">
+                <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">{editingBlogId ? 'Edit Story' : 'Publish a local story'}</h3>
+                <p className="text-xs text-[#6E727C] mb-6">Write custom travel articles, local restaurant guides or mountain hiking paths.</p>
+
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Short Excerpt Summary</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Article Title</label>
                     <input 
                       type="text" 
-                      placeholder="An exploration of local gastronomy." 
-                      value={newBlogExcerpt}
-                      onChange={(e) => setNewBlogExcerpt(e.target.value)}
+                      placeholder="e.g. Best Seafood spots in Las Palmas" 
+                      value={newBlogTitle}
+                      onChange={(e) => setNewBlogTitle(e.target.value)}
                       className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Article Body Story</label>
-                  <textarea 
-                    placeholder="Begin writing your story..." 
-                    value={newBlogContent}
-                    onChange={(e) => setNewBlogContent(e.target.value)}
-                    className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium min-h-[180px] resize-vertical"
-                  ></textarea>
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Category</label>
+                      <select 
+                        value={newBlogCategory}
+                        onChange={(e) => setNewBlogCategory(e.target.value)}
+                        className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3.5 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
+                      >
+                        <option value="Local secrets 🤫">Local secrets 🤫</option>
+                        <option value="Food & Wine 🍷">Food & Wine 🍷</option>
+                        <option value="House stories 🏡">House stories 🏡</option>
+                        <option value="Adventure Trails 🧗">Adventure Trails 🧗</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Short Excerpt Summary</label>
+                      <input 
+                        type="text" 
+                        placeholder="An exploration of local gastronomy." 
+                        value={newBlogExcerpt}
+                        onChange={(e) => setNewBlogExcerpt(e.target.value)}
+                        className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
+                      />
+                    </div>
+                  </div>
 
-                <button onClick={handlePublishStory} className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47]">
-                  Publish Article
-                </button>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Article Body Story</label>
+                    <textarea 
+                      placeholder="Begin writing your story..." 
+                      value={newBlogContent}
+                      onChange={(e) => setNewBlogContent(e.target.value)}
+                      className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium min-h-[180px] resize-vertical"
+                    ></textarea>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveStory} className="flex-1 py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47]">
+                      {editingBlogId ? 'Save Changes' : 'Publish Article'}
+                    </button>
+                    {editingBlogId && (
+                      <button 
+                        onClick={() => {
+                          setEditingBlogId(null);
+                          setNewBlogTitle('');
+                          setNewBlogExcerpt('');
+                          setNewBlogContent('');
+                        }} 
+                        className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#F5EFE0] text-[#6E727C] hover:text-[#3F434D]"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
