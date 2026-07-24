@@ -16,10 +16,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email_verified == true;
     }
     
+    // NOTE: This list of admin emails must be kept in sync with src/config/admins.ts
     function isAdmin() {
       return isSignedIn() && (
         request.auth.token.email == 'mila@milanomad.es' || 
-        request.auth.token.email == 'amine.saidani.101@gmail.com'
+        request.auth.token.email == 'amine.saidani.101@gmail.com' ||
+        request.auth.token.email == 'milalotiairbnb@gmail.com'
       );
     }
     

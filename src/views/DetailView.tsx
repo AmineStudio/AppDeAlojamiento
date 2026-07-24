@@ -22,8 +22,7 @@ interface DetailViewProps {
   selectDate: (d: Date) => void;
   guestCount: number;
   setGuestCount: (count: number) => void;
-  triggerBookingSuccess: () => void;
-  getSubtotal: () => number;
+  triggerBookingSuccess: (totalPrice: number) => void;
   getDaysCount: () => number;
   user: { name: string; email: string; role: 'host' | 'guest' } | null;
   handleAddReview: (houseId: string, rating: number, comment: string) => void;
@@ -51,12 +50,22 @@ export function DetailView({
   guestCount,
   setGuestCount,
   triggerBookingSuccess,
-  getSubtotal,
   getDaysCount,
   user,
   handleAddReview,
   canReview
 }: DetailViewProps) {
+  const [selectedRoomId, setSelectedRoomId] = React.useState<string | null>(null);
+  
+  React.useEffect(() => {
+    setSelectedRoomId(null);
+  }, [activeHouse.id]);
+
+  const activeRooms = roomsByHouse[activeHouse.id] || [];
+  const selectedRoom = activeRooms.find(r => r.id === selectedRoomId) || activeRooms[0];
+  const currentPrice = selectedRoom ? selectedRoom.price : activeHouse.pricePerNight;
+  const calculatedSubtotal = getDaysCount() * currentPrice;
+
   const [newReviewRating, setNewReviewRating] = React.useState(5);
   const [newReviewText, setNewReviewText] = React.useState('');
 
@@ -100,9 +109,6 @@ export function DetailView({
           </div>
 
           <div className="flex gap-2">
-            <button onClick={() => showToast('❤️ Saved to favorites')} className="py-2.5 px-6 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] rounded-full text-xs font-semibold uppercase tracking-wider text-[#3F434D] transition-all">
-              ♡ Favorite
-            </button>
             <button onClick={() => showToast('↗️ Link copied to clipboard!')} className="py-2.5 px-6 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] rounded-full text-xs font-semibold uppercase tracking-wider text-[#3F434D] transition-all">
               ↗️ Share Stay
             </button>
@@ -152,7 +158,7 @@ export function DetailView({
                 {(roomsByHouse[activeHouse.id] || []).map((r) => (
                   <div 
                     key={r.id} 
-                    className={`flex flex-col gap-4 p-5 rounded-3xl bg-white border border-[rgba(63,67,77,0.06)] shadow-sm hover:border-[#3D7A95] transition-all duration-200 ${!r.available ? 'opacity-50' : ''}`}
+                    className={`flex flex-col gap-4 p-5 rounded-3xl bg-white border shadow-sm transition-all duration-200 ${!r.available ? 'opacity-50' : ''} ${selectedRoomId === r.id ? 'border-[#3D7A95] ring-1 ring-[#3D7A95]' : 'border-[rgba(63,67,77,0.06)] hover:border-[#3D7A95]'}`}
                   >
                     <div className="flex gap-3 overflow-x-auto snap-x pb-2 w-full no-scrollbar">
                       {r.images.map((img, idx) => (
@@ -175,14 +181,13 @@ export function DetailView({
                         </div>
                         <button 
                           onClick={() => {
-                            setCheckInDate(new Date(2026, 5, 15));
-                            setCheckOutDate(new Date(2026, 5, 20));
-                            showToast(`✨ Selected dates pre-loaded for ${r.name}`);
+                            setSelectedRoomId(r.id);
+                            showToast(`✨ Selected room: ${r.name}`);
                           }}
                           disabled={!r.available}
-                          className={`py-2 px-5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${r.available ? 'bg-[#A7AB5E] text-white hover:bg-[#888B47]' : 'bg-gray-200 text-[#6E727C] cursor-not-allowed'}`}
+                          className={`py-2 px-5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${r.available ? (selectedRoomId === r.id ? 'bg-[#3D7A95] text-white' : 'bg-[#A7AB5E] text-white hover:bg-[#888B47]') : 'bg-gray-200 text-[#6E727C] cursor-not-allowed'}`}
                         >
-                          {r.available ? 'Book Room' : 'Unavailable'}
+                          {r.available ? (selectedRoomId === r.id ? 'Selected' : 'Select Room') : 'Unavailable'}
                         </button>
                       </div>
                     </div>
@@ -305,9 +310,12 @@ export function DetailView({
           {/* Right hand booking sidebar card */}
           <div className="lg:col-span-1">
             <div className="sticky top-28 bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 shadow-xl">
-              <div className="flex items-baseline gap-1.5 mb-6">
-                <span className="font-display font-light text-4xl text-[#3F434D]">€{activeHouse.pricePerNight}</span>
-                <span className="text-xs font-bold uppercase tracking-widest text-[#6E727C]">/ night</span>
+              <div className="flex flex-col gap-1 mb-6">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-display font-light text-4xl text-[#3F434D]">€{currentPrice}</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[#6E727C]">/ night</span>
+                </div>
+                {selectedRoom && <span className="text-[10px] font-bold text-[#3D7A95] uppercase tracking-wider">{selectedRoom.name}</span>}
               </div>
 
               {/* Custom Interactive Calendar Widget Input */}
@@ -445,31 +453,23 @@ export function DetailView({
               </div>
 
               <button 
-                onClick={triggerBookingSuccess}
+                onClick={() => triggerBookingSuccess(calculatedSubtotal)}
                 disabled={!checkInDate || !checkOutDate}
                 className="w-full py-4 bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] disabled:bg-gray-200 disabled:text-[#6E727C] disabled:cursor-not-allowed rounded-full text-xs font-semibold uppercase tracking-widest shadow-md hover:shadow-lg transition-all"
               >
-                {checkInDate && checkOutDate ? `Reserve · €${getSubtotal() + 45 + 38}` : 'Choose dates to continue'}
+                {checkInDate && checkOutDate ? `Reserve · €${calculatedSubtotal}` : 'Choose dates to continue'}
               </button>
 
               {/* Calculated Prices Block */}
               {checkInDate && checkOutDate && (
                 <div className="border-t border-dashed border-[rgba(63,67,77,0.1)] pt-6 mt-6 text-xs text-[#6E727C] space-y-3">
                   <div className="flex justify-between">
-                    <span>€{activeHouse.pricePerNight} × {getDaysCount()} nights</span>
-                    <span className="font-semibold text-[#3F434D]">€{getSubtotal()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Cleaning fee</span>
-                    <span className="font-semibold text-[#3F434D]">€45</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Mila service fee</span>
-                    <span className="font-semibold text-[#3F434D]">€38</span>
+                    <span>€{currentPrice} × {getDaysCount()} nights</span>
+                    <span className="font-semibold text-[#3F434D]">€{calculatedSubtotal}</span>
                   </div>
                   <div className="border-t border-[rgba(63,67,77,0.08)] pt-3 flex justify-between text-sm font-bold text-[#3F434D]">
                     <span>Total stay price</span>
-                    <span>€{getSubtotal() + 45 + 38}</span>
+                    <span>€{calculatedSubtotal}</span>
                   </div>
                 </div>
               )}

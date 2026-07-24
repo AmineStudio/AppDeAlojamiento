@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { House } from '../types';
 
 interface HomeViewProps {
@@ -99,12 +99,6 @@ export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }
                       {h.tag}
                     </span>
                   )}
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); showToast('❤️ Saved to favorites.'); }}
-                    className="absolute top-4 right-4 h-9 w-9 rounded-full bg-white flex items-center justify-center shadow-md text-[#6E727C] hover:text-[#888B47] hover:scale-105 transition-all"
-                  >
-                    <Heart className="h-4.5 w-4.5" />
-                  </button>
                 </div>
 
                 <div className="p-6 flex flex-col flex-grow justify-between">

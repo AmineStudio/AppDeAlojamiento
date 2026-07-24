@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { ADMIN_EMAILS } from '../config/admins';
 
 interface LoginModalProps {
   loginModalOpen: boolean;
@@ -37,7 +38,7 @@ export function LoginModal({
         } else {
           setLoginModalOpen(false);
           const emailLower = userCredential.user.email?.toLowerCase();
-          if (emailLower === 'mila@milanomad.es' || emailLower === 'amine.saidani.101@gmail.com' || emailLower === 'milalotiairbnb@gmail.com') {
+          if (emailLower && ADMIN_EMAILS.includes(emailLower)) {
             showToast('Welcome back, Admin! ☀️ Open Dashboard to manage your stays.');
           } else {
             showToast(`Welcome! Feel free to explore and request stays.`);
@@ -79,7 +80,7 @@ export function LoginModal({
       const userCredential = await signInWithPopup(auth, provider);
       setLoginModalOpen(false);
       const emailLower = userCredential.user.email?.toLowerCase();
-      if (emailLower === 'mila@milanomad.es' || emailLower === 'amine.saidani.101@gmail.com' || emailLower === 'milalotiairbnb@gmail.com') {
+      if (emailLower && ADMIN_EMAILS.includes(emailLower)) {
         showToast('Welcome back, Admin! ☀️ Open Dashboard to manage your stays.');
       } else {
         showToast(`Welcome! Feel free to explore and request stays.`);

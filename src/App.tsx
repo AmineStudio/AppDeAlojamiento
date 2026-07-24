@@ -53,6 +53,7 @@ import { GuestInboxView } from './views/GuestInboxView';
 import { auth, db } from './firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { collection, onSnapshot, query, setDoc, doc, addDoc, updateDoc, getDoc, where } from 'firebase/firestore';
+import { ADMIN_EMAILS } from './config/admins';
 
 export default function App() {
   // Navigation & View State
@@ -62,6 +63,9 @@ export default function App() {
 
   // Core Data State (Simulating persistent full-stack reactive store)
   const [isAppDataLoaded, setIsAppDataLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [houses, setHouses] = useState<House[]>(initialHouses);
   const [roomsByHouse, setRoomsByHouse] = useState<Record<string, Room[]>>(initialRooms);
   const [reviewsByHouse, setReviewsByHouse] = useState<Record<string, GuestReview[]>>(initialReviews);
@@ -166,6 +170,7 @@ export default function App() {
         }
       } catch (err) {
         console.error("Failed to load app data from Firestore", err);
+        setLoadFailed(true);
       } finally {
         setIsAppDataLoaded(true);
       }
@@ -173,8 +178,21 @@ export default function App() {
     loadAppData();
   }, []);
 
+  // Beforeunload listener
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
   // Save app data to Firestore
   const saveAppData = async (newHouses: House[], newRooms: Record<string, Room[]>, newBlogPosts: BlogPost[], newHostProfile: HostProfile) => {
+    if (loadFailed) return;
     try {
       await setDoc(doc(db, 'appData/main'), {
         houses: newHouses,
@@ -182,16 +200,19 @@ export default function App() {
         blogPosts: newBlogPosts,
         hostProfile: newHostProfile
       });
+      showToast("Datos guardados con éxito.");
+      setHasUnsavedChanges(false);
     } catch (err) {
       console.error("Failed to save app data", err);
+      showToast("Error al guardar los datos.");
     }
   };
 
-  useEffect(() => {
-    if (isAppDataLoaded && user && user.role === 'host') {
-      saveAppData(houses, roomsByHouse, blogPosts, hostProfile);
-    }
-  }, [houses, roomsByHouse, blogPosts, hostProfile, user, isAppDataLoaded]);
+  const handleManualSave = async () => {
+    setIsSaving(true);
+    await saveAppData(houses, roomsByHouse, blogPosts, hostProfile);
+    setIsSaving(false);
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(firebaseUser => {
@@ -199,7 +220,7 @@ export default function App() {
         if (firebaseUser.emailVerified) {
           const email = firebaseUser.email || '';
           const name = firebaseUser.displayName || email.split('@')[0];
-          const role = (email === 'mila@milanomad.es' || email === 'amine.saidani.101@gmail.com' || email === 'milalotiairbnb@gmail.com') ? 'host' : 'guest';
+          const role = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'host' : 'guest';
           setUser({ name, email, role });
         } else {
           // Keep them logged out until they verify
@@ -312,10 +333,6 @@ export default function App() {
   const getDaysCount = () => {
     if (!checkInDate || !checkOutDate) return 0;
     return Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
-  };
-
-  const getSubtotal = () => {
-    return getDaysCount() * activeHouse.pricePerNight;
   };
 
   // Posting Reviews (Real-time update)
@@ -513,7 +530,7 @@ export default function App() {
   };
 
   // Booking Execution Action
-  const triggerBookingSuccess = async () => {
+  const triggerBookingSuccess = async (totalPrice: number) => {
     if (!user) {
       triggerLoginModal();
       return;
@@ -523,14 +540,13 @@ export default function App() {
       return;
     }
     const days = getDaysCount();
-    const finalPriceTotal = getSubtotal() + 45 + 38;
     
     try {
       await addDoc(collection(db, 'pastBookings'), {
         guestEmail: user.email,
         houseId: activeHouse.id
       });
-      showToast(`🎉 Reservation Request Registered! Mila has received your booking for ${days} nights on ${activeHouse.name}. Total: €${finalPriceTotal}`);
+      showToast(`🎉 Reservation Request Registered! Mila has received your booking for ${days} nights on ${activeHouse.name}. Total: €${totalPrice}`);
       setCheckInDate(null);
       setCheckOutDate(null);
     } catch (err: any) {
@@ -564,7 +580,8 @@ export default function App() {
       }));
     }
 
-    showToast('✔️ Rooms and base pricing saved and updated live across the portal.');
+    setHasUnsavedChanges(true);
+    showToast('✔️ Rooms rates updated in memory. Please click "Guardar cambios".');
   };
 
   // Host Action: Publish a new blog story
@@ -619,6 +636,7 @@ export default function App() {
       ...prev,
       [activeHouse.id]: updated
     }));
+    setHasUnsavedChanges(true);
   };
 
   // Photo Management Handlers
@@ -640,6 +658,7 @@ export default function App() {
 
     if (photoModalTarget.type === 'house') {
       setHouses(prev => prev.map(h => h.id === activeHouse.id ? { ...h, images: [...h.images, url] } : h));
+      setHasUnsavedChanges(true);
       showToast("📸 Photo added successfully to the house gallery.");
     } else if (photoModalTarget.type === 'room') {
       setRoomsByHouse(prev => ({
@@ -648,6 +667,7 @@ export default function App() {
           r.id === photoModalTarget.id ? { ...r, images: [...r.images, url] } : r
         )
       }));
+      setHasUnsavedChanges(true);
       showToast("📸 Photo added successfully to the room gallery.");
     }
   };
@@ -661,6 +681,7 @@ export default function App() {
       }
       return h;
     }));
+    setHasUnsavedChanges(true);
     showToast("📸 Photo removed from the house gallery.");
   };
 
@@ -677,6 +698,7 @@ export default function App() {
       });
       return { ...prev, [activeHouse.id]: updated };
     });
+    setHasUnsavedChanges(true);
     showToast("📸 Photo removed from room gallery.");
   }
 
@@ -688,6 +710,12 @@ export default function App() {
       
       {/* Toast Notification */}
       <Toast toastMessage={toastMessage} />
+      
+      {loadFailed && (
+        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-[60] flex items-center gap-3 bg-red-600 text-white py-3 px-5 rounded-2xl shadow-xl max-w-sm">
+          <span className="text-sm font-medium">No se han podido cargar los datos. Recarga la página antes de editar.</span>
+        </div>
+      )}
 
       {/* Navigation Header */}
       <Navigation 
@@ -762,7 +790,6 @@ export default function App() {
             guestCount={guestCount}
             setGuestCount={setGuestCount}
             triggerBookingSuccess={triggerBookingSuccess}
-            getSubtotal={getSubtotal}
             getDaysCount={getDaysCount}
             user={user}
             handleAddReview={handleAddReview}
@@ -833,6 +860,11 @@ export default function App() {
             handlePublishStory={handlePublishStory}
             handleReplyInquiry={handleReplyInquiry}
             handleNavigate={handleNavigate}
+            loadFailed={loadFailed}
+            hasUnsavedChanges={hasUnsavedChanges}
+            setHasUnsavedChanges={setHasUnsavedChanges}
+            isSaving={isSaving}
+            handleManualSave={handleManualSave}
           />
         )}
         {/* 6. GUEST INBOX VIEW */}

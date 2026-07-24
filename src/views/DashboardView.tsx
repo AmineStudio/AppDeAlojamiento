@@ -41,6 +41,11 @@ interface DashboardViewProps {
   handlePublishStory: () => void;
   handleReplyInquiry: (id: string, message: string, role: 'host' | 'guest') => void;
   handleNavigate: (page: string, params?: { houseId?: string, blogId?: string }) => void;
+  loadFailed: boolean;
+  hasUnsavedChanges: boolean;
+  setHasUnsavedChanges: (val: boolean) => void;
+  isSaving: boolean;
+  handleManualSave: () => void;
 }
 
 export function DashboardView({
@@ -81,7 +86,12 @@ export function DashboardView({
   setNewBlogContent,
   handlePublishStory,
   handleReplyInquiry,
-  handleNavigate
+  handleNavigate,
+  loadFailed,
+  hasUnsavedChanges,
+  setHasUnsavedChanges,
+  isSaving,
+  handleManualSave
 }: DashboardViewProps) {
   const [activeInquiryId, setActiveInquiryId] = React.useState<string | null>(null);
   const [replyText, setReplyText] = React.useState('');
@@ -107,6 +117,7 @@ export function DashboardView({
   const handleDeleteStory = (id: string) => {
     setBlogPosts(prev => prev.filter(b => b.id !== id));
     showToast('✔️ Story deleted successfully.');
+    setHasUnsavedChanges(true);
     if (editingBlogId === id) {
       setEditingBlogId(null);
       setNewBlogTitle('');
@@ -130,17 +141,20 @@ export function DashboardView({
         content: newBlogContent,
       } : b));
       showToast('✔️ Story updated successfully.');
+      setHasUnsavedChanges(true);
       setEditingBlogId(null);
       setNewBlogTitle('');
       setNewBlogExcerpt('');
       setNewBlogContent('');
     } else {
       handlePublishStory();
+      setHasUnsavedChanges(true);
     }
   };
 
   const handleChangeHouseField = (field: keyof House, value: any) => {
     setHouses(prev => prev.map(h => h.id === activeHouse.id ? { ...h, [field]: value } : h));
+    setHasUnsavedChanges(true);
   };
 
   const handleChangeRoomField = (roomId: string, field: keyof Room, value: any) => {
@@ -148,7 +162,39 @@ export function DashboardView({
       ...prev,
       [activeHouse.id]: (prev[activeHouse.id] || []).map(r => r.id === roomId ? { ...r, [field]: value } : r)
     }));
+    setHasUnsavedChanges(true);
   };
+
+  const handleHostProfileChange = (field: keyof HostProfile, value: string) => {
+    setHostProfile(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
+  };
+
+  const SaveButton = () => (
+    <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-2xl border border-[rgba(63,67,77,0.06)] shadow-sm">
+      <div>
+        {hasUnsavedChanges ? (
+          <span className="text-xs font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+            Cambios sin guardar
+          </span>
+        ) : (
+          <span className="text-xs font-bold text-[#6E727C] uppercase tracking-widest">Todo está guardado</span>
+        )}
+      </div>
+      <button
+        onClick={handleManualSave}
+        disabled={isSaving || !hasUnsavedChanges || loadFailed}
+        className={`py-2 px-6 rounded-full text-xs font-semibold uppercase tracking-wider transition-all ${
+          hasUnsavedChanges && !isSaving && !loadFailed
+            ? 'bg-[#A7AB5E] text-white hover:bg-[#888B47]' 
+            : 'bg-[#F5EFE0] text-[#6E727C] cursor-not-allowed'
+        }`}
+      >
+        {isSaving ? 'Guardando...' : 'Guardar cambios'}
+      </button>
+    </div>
+  );
 
   return (
     <div className="animate-fade-in py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -234,6 +280,9 @@ export function DashboardView({
           {/* Tab A: room management & pricing */}
           {dashActiveTab === 'listings' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="lg:col-span-3">
+                <SaveButton />
+              </div>
               
               {/* Left house picker */}
               <div className="lg:col-span-1 border-r border-[rgba(63,67,77,0.06)] pr-0 lg:pr-8">
@@ -257,6 +306,7 @@ export function DashboardView({
 
               {/* Main Listing Editor panel */}
               <div className="lg:col-span-2">
+                <fieldset disabled={loadFailed} className="border-none p-0 m-0 w-full min-w-0">
                 <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 shadow-xl">
                   <div className="flex justify-between items-center border-b border-[rgba(63,67,77,0.06)] pb-4 mb-6">
                     <div>
@@ -390,6 +440,7 @@ export function DashboardView({
                     </button>
                   </div>
                 </div>
+                </fieldset>
               </div>
             </div>
           )}
@@ -496,7 +547,11 @@ export function DashboardView({
 
           {/* Tab C: story publication */}
           {dashActiveTab === 'stories' && (
+            <fieldset disabled={loadFailed} className="border-none p-0 m-0 w-full min-w-0">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="lg:col-span-2">
+                <SaveButton />
+              </div>
               <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 shadow-xl h-fit">
                 <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-4">Existing Stories</h3>
                 {blogPosts.length === 0 ? (
@@ -595,11 +650,15 @@ export function DashboardView({
                 </div>
               </div>
             </div>
+            </fieldset>
           )}
 
           {/* Tab D: host system settings */}
           {dashActiveTab === 'settings' && (
-            <div className="max-w-2xl bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 shadow-xl space-y-6">
+            <fieldset disabled={loadFailed} className="border-none p-0 m-0 w-full min-w-0">
+            <div className="max-w-2xl mx-auto space-y-6">
+              <SaveButton />
+              <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 shadow-xl space-y-6">
               <div>
                 <h3 className="font-display font-medium text-xl text-[#3F434D] mb-1">Host Review prompts</h3>
                 <p className="text-xs text-[#6E727C]">Configure trigger conditions asking guests to leave reviews post checkout.</p>
@@ -684,6 +743,8 @@ export function DashboardView({
                 </div>
               </div>
             </div>
+            </div>
+            </fieldset>
           )}
         </div>
       )}
