@@ -33,7 +33,8 @@ export function LoginModal({
       if (mode === 'login') {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         if (!userCredential.user.emailVerified) {
-          showToast('Please verify your email address before logging in.');
+          await sendEmailVerification(userCredential.user);
+          showToast('Please verify your email. A fresh link has been sent to your inbox.');
           await signOut(auth);
         } else {
           setLoginModalOpen(false);

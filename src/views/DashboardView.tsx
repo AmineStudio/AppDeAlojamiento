@@ -495,14 +495,6 @@ export function DashboardView({
                       </div>
 
                       <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
-                        {/* Initial Inquiry Message */}
-                        <div className="flex flex-col gap-1 items-start">
-                          <span className="text-[10px] uppercase font-bold text-[#6E727C] ml-2">{activeInquiry.guestName} • {activeInquiry.date}</span>
-                          <div className="bg-[#F5EFE0] text-[#3F434D] p-4 rounded-2xl rounded-tl-sm max-w-[85%] text-sm font-light leading-relaxed">
-                            {activeInquiry.message}
-                          </div>
-                        </div>
-
                         {/* Thread messages */}
                         {activeInquiry.thread?.map(msg => (
                           <div key={msg.id} className={`flex flex-col gap-1 ${msg.sender === 'host' ? 'items-end' : 'items-start'}`}>
