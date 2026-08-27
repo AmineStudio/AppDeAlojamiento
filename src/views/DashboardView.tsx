@@ -219,7 +219,7 @@ export function DashboardView({
               <p className="text-xs font-light text-[#6E727C] mt-2">Manage room rates, toggle room availability, view inquiries, and write stories.</p>
             </div>
             <div className="text-xs font-bold uppercase tracking-widest bg-[#CFE4EC] text-[#3D7A95] px-4 py-2 rounded-full">
-              Mila Nomad Rooms active portfolio
+              M.I.L.A C🤍living active portfolio
             </div>
           </div>
 

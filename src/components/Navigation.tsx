@@ -37,7 +37,7 @@ export function Navigation({
             <MilaLogo className="h-11 w-auto transform transition-all duration-300 group-hover:scale-105" />
             <div className="flex flex-col">
               <span className="font-display font-medium text-lg leading-4 tracking-wider uppercase text-[#3F434D]">M.I.L.A</span>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#3D7A95]">NOMAD ROOMS</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-[#3D7A95]">C🤍living</span>
             </div>
           </div>
 

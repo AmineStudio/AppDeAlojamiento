@@ -48,7 +48,7 @@ export function Footer({ handleNavigate, handleHouseClick, showToast }: FooterPr
         </div>
       </div>
       <div className="max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.06)] pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-[#F3ECDA]/40">
-        <span>© 2026 M.I.L.A Nomad Rooms · Gran Canaria stays</span>
+        <span>© 2026 M.I.L.A C🤍living · Gran Canaria stays</span>
         <span>Crafted for true travelers with absolute dedication</span>
       </div>
     </footer>
