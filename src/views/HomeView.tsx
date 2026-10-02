@@ -29,7 +29,7 @@ export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }
           </h1>
 
           <p className="text-[#6E727C] text-lg sm:text-xl font-light leading-relaxed max-w-xl mb-10">
-            Two custom shared homes nestled in vibrant Calle León y Castillo, Las Palmas, and the serene university area of Tafira Baja.
+            Boutique shared homes nestled in vibrant Calle León y Castillo, Las Palmas, and serene island settings across Gran Canaria.
           </p>
 
           <div className="flex gap-4 flex-wrap justify-center mb-16">
@@ -44,7 +44,7 @@ export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }
           {/* Hero Statistics */}
           <div className="grid grid-cols-3 gap-8 sm:gap-16 border-t border-[rgba(63,67,77,0.08)] pt-12 w-full max-w-2xl">
             <div>
-              <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#3D7A95] tracking-tight">2</h5>
+              <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#3D7A95] tracking-tight">{houses.length}</h5>
               <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Shared Homes</p>
             </div>
             <div>

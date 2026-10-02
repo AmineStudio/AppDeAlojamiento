@@ -103,11 +103,21 @@ export function LoginModal({
           <>
             <div className="text-center mb-6">
               <h2 className="font-display font-light text-3xl text-[#3F434D]">
-                Welcome to <span className="italic font-medium text-[#A7AB5E]">Mila</span>
+                Acceso a <span className="italic font-medium text-[#A7AB5E]">Mila</span>
               </h2>
-              <p className="text-[#6E727C] mt-2 text-sm leading-relaxed">
-                Sign in to request stays and connect with hosts.
+              <p className="text-[#6E727C] mt-2 text-xs leading-relaxed">
+                Inicia sesión para reservar estancias o gestionar el portal de anfitriona (dueña).
               </p>
+              <div className="mt-3 p-2.5 rounded-xl bg-[#F0DDBE]/50 border border-[rgba(63,67,77,0.1)] text-[11px] text-[#3F434D] flex items-center justify-between">
+                <span>👑 <strong>Dueña / Admin:</strong> amine.saidani.101@gmail.com</span>
+                <button
+                  type="button"
+                  onClick={() => setEmail('amine.saidani.101@gmail.com')}
+                  className="text-[10px] uppercase font-bold text-[#3D7A95] hover:underline shrink-0 ml-2"
+                >
+                  Usar email
+                </button>
+              </div>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

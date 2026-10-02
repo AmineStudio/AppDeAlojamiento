@@ -1,0 +1,199 @@
+{
+  "general": {
+    "guardarCambios": "Guardar cambios",
+    "guardando": "Guardando...",
+    "cancelar": "Cancelar",
+    "eliminar": "Eliminar",
+    "editar": "Editar",
+    "crear": "Crear",
+    "todoGuardado": "Todos los cambios están guardados",
+    "cambiosPendientes": "Hay cambios pendientes de guardar",
+    "acciones": "Acciones",
+    "buscar": "Buscar...",
+    "sinResultados": "No se encontraron resultados"
+  },
+  "subidaFotos": {
+    "tituloGaleria": "Fotos",
+    "primeraFotoPrincipal": "La primera foto será la portada",
+    "arrastraAqui": "Arrastra y suelta tus fotos aquí",
+    "oSelecciona": "o haz clic para elegir desde tu dispositivo",
+    "pegarEnlace": "O pega el enlace web de una foto:",
+    "placeholderEnlace": "https://ejemplo.com/mifoto.jpg",
+    "botonAnadirEnlace": "Añadir enlace",
+    "sinFotos": "Aún no has añadido fotos. Sube archivos o pega enlaces arriba.",
+    "fotoPrincipal": "Portada",
+    "eliminarFoto": "Eliminar foto",
+    "errorFormato": "Por favor sube solo imágenes válidas (JPG, PNG, WEBP, etc.)",
+    "procesando": "Procesando imagen..."
+  },
+  "panel": {
+    "titulo": "Panel de Gestión",
+    "bienvenida": "Hola, Mila",
+    "descripcion": "Administra tus alojamientos, gestiona las habitaciones y tarifas, y comparte historias con tus huéspedes.",
+    "badgePropietaria": "Espacio Privado de Anfitriona",
+    "estadoGuardado": "Guardado automáticamente",
+    "estadisticas": {
+      "casasActivas": "Alojamientos Activos",
+      "verCasas": "Ver y gestionar alojamientos",
+      "habitaciones": "Habitaciones",
+      "libres": "libres",
+      "ocupadas": "ocupadas",
+      "historias": "Historias Publicadas",
+      "verHistorias": "Artículos en el blog",
+      "consultas": "Consultas de Viajeros",
+      "mensajesPendientes": "mensajes sin leer"
+    },
+    "pestanas": {
+      "casas": "Alojamientos",
+      "habitaciones": "Habitaciones y Tarifas",
+      "historias": "Historias del Blog",
+      "consultas": "Mensajes",
+      "ajustes": "Perfil de Anfitriona"
+    },
+    "accesoRestringido": {
+      "titulo": "Acceso Reservado para la Anfitriona",
+      "descripcion": "Solo la dueña de Mila Nomad tiene acceso para gestionar alojamientos, habitaciones y responder solicitudes.",
+      "botonIniciar": "Entrar como anfitriona",
+      "cuentasHabilitadas": "Cuentas autorizadas: amine.saidani.101@gmail.com / mila@milanomad.es"
+    }
+  },
+  "casas": {
+    "tituloSeccion": "Alojamientos",
+    "botonNueva": "Nuevo Alojamiento",
+    "buscarPlaceholder": "Buscar alojamiento por nombre o zona...",
+    "baseNoche": "Tarifa base / noche",
+    "habitaciones": "Habitaciones",
+    "capacidad": "Capacidad",
+    "maxHuespedes": "Hasta",
+    "huespedes": "huéspedes",
+    "verHabitaciones": "Habitaciones",
+    "verEnWeb": "Ver en la web pública",
+    "modalCrear": "Nuevo Alojamiento",
+    "modalEditar": "Editar Alojamiento",
+    "campoNombre": "Nombre del Alojamiento",
+    "placeholderNombre": "ej. Casa Compartida Triana",
+    "campoUbicacion": "Ubicación",
+    "placeholderUbicacion": "ej. Calle Triana 48, Las Palmas",
+    "campoEtiqueta": "Distintivo o Etiqueta",
+    "campoPrecio": "Precio base por noche (€)",
+    "campoCapacidad": "Capacidad máxima de huéspedes",
+    "campoHabitacionesResumen": "Resumen de habitaciones",
+    "placeholderHabitacionesResumen": "ej. 3 Habitaciones · 6 Camas",
+    "campoDescripcion": "Descripción del Alojamiento",
+    "placeholderDescripcion": "Describe el ambiente, la luz natural, la cercanía a playas o zonas culturales...",
+    "campoComodidades": "Comodidades y Servicios",
+    "anadirComodidad": "Añadir otra comodidad",
+    "placeholderComodidad": "ej. Piscina, Terraza chillout, Yoga...",
+    "etiquetasPredefinidas": [
+      "Centro Ciudad 🏙️",
+      "Cerca del Campus 🎓",
+      "Junto a la Playa 🌊",
+      "Casco Histórico 🏛️",
+      "Rincón Tranquilo ⛰️",
+      "Estancia Acogedora ☕"
+    ],
+    "comodidadesSugeridas": [
+      "Wifi de alta velocidad (Fibra)",
+      "Aire acondicionado",
+      "Balcón soleado",
+      "Cocina totalmente equipada",
+      "Zona de estudio y teletrabajo",
+      "Jardín privado",
+      "Vistas al Parque Romano",
+      "Vistas al mar",
+      "Techos altos de 4 metros",
+      "Ambiente tranquilo",
+      "Lavadora y plancha"
+    ],
+    "confirmarEliminar": {
+      "titulo": "¿Deseas eliminar este alojamiento?",
+      "mensaje": "Se eliminará este alojamiento de tu catálogo. Las habitaciones vinculadas a él también dejarán de estar activas.",
+      "botonConfirmar": "Sí, eliminar alojamiento"
+    }
+  },
+  "habitaciones": {
+    "tituloSeccion": "Habitaciones y Tarifas",
+    "botonNueva": "Nueva Habitación",
+    "filtroTodas": "Todas las casas",
+    "buscarPlaceholder": "Buscar por nombre, cama o vistas...",
+    "estadoDisponible": "Disponible",
+    "estadoOcupada": "Ocupada",
+    "modalCrear": "Nueva Habitación",
+    "modalEditar": "Editar Habitación",
+    "campoAlojamiento": "Alojamiento al que pertenece",
+    "campoNombre": "Nombre de la Habitación",
+    "placeholderNombre": "ej. Suite del Balcón Francés",
+    "campoPrecio": "Precio por noche (€)",
+    "campoCamas": "Tipo de cama",
+    "placeholderCamas": "ej. 1 Cama King Size",
+    "campoVistas": "Vistas u orientación",
+    "placeholderVistas": "ej. Patio canario con buganvillas",
+    "campoEstado": "Disponibilidad de la habitación",
+    "campoDescripcion": "Descripción de la Habitación",
+    "placeholderDescripcion": "Detalles sobre el espacio, escritorio de trabajo, luz natural, armario...",
+    "opcionesCamas": [
+      "1 Cama King Size",
+      "1 Cama Queen Size",
+      "1 Cama Doble",
+      "2 Camas Individuales",
+      "2 Camas Queen Size",
+      "1 Cama Doble + Zona de trabajo"
+    ],
+    "opcionesVistas": [
+      "Balcón privado hacia la ciudad",
+      "Patio interior con plantas",
+      "Jardín soleado",
+      "Vistas al mar y palmeras",
+      "Vistas a la montaña",
+      "Tranquilo patio trasero"
+    ],
+    "confirmarEliminar": {
+      "titulo": "¿Deseas eliminar esta habitación?",
+      "mensaje": "La habitación será retirada del alojamiento seleccionado.",
+      "botonConfirmar": "Sí, eliminar habitación"
+    }
+  },
+  "historias": {
+    "tituloSeccion": "Historias y Guías de la Isla",
+    "botonNueva": "Escribir Nueva Historia",
+    "buscarPlaceholder": "Buscar historia por título o temática...",
+    "modalCrear": "Publicar Nueva Historia",
+    "modalEditar": "Editar Historia",
+    "campoTitulo": "Título del Artículo",
+    "placeholderTitulo": "ej. Rincones secretos para comer bien en Las Palmas",
+    "campoCategoria": "Categoría o Temática",
+    "campoSubtitulo": "Subtítulo o Frase destacada",
+    "placeholderSubtitulo": "ej. Un paseo gastronómico entre adoquines y recetas tradicionales.",
+    "campoAutora": "Firma / Autora",
+    "campoResumen": "Resumen Breve",
+    "placeholderResumen": "Una o dos oraciones para presentar la historia...",
+    "campoContenido": "Contenido del Artículo",
+    "placeholderContenido": "Escribe aquí la historia, anécdotas, consejos o rutas...",
+    "campoFotoPortada": "Foto de Portada",
+    "verEnBlog": "Ver en el blog",
+    "categorias": [
+      "Secretos locales 🤫",
+      "Gastronomía y vinos 🍷",
+      "Historias de la casa 🏡",
+      "Rutas y naturaleza 🧗",
+      "Vida nómada 💻",
+      "Cultura canaria 🏛️"
+    ],
+    "confirmarEliminar": {
+      "titulo": "¿Deseas eliminar esta historia?",
+      "mensaje": "El artículo dejará de aparecer en la sección de historias del blog.",
+      "botonConfirmar": "Sí, eliminar historia"
+    }
+  },
+  "notificaciones": {
+    "casaGuardada": "Alojamiento guardado con éxito.",
+    "casaEliminada": "Alojamiento eliminado con éxito.",
+    "habitacionGuardada": "Habitación guardada con éxito.",
+    "habitacionEliminada": "Habitación eliminada con éxito.",
+    "historiaGuardada": "Historia guardada y publicada.",
+    "historiaEliminada": "Historia eliminada con éxito.",
+    "perfilActualizado": "Perfil de anfitriona actualizado con éxito.",
+    "errorGuardar": "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+    "datosSincronizados": "Todos tus cambios están guardados."
+  }
+}

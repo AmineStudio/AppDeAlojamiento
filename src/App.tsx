@@ -50,10 +50,11 @@ import { DashboardView } from './views/DashboardView';
 import { DetailView } from './views/DetailView';
 import { GuestInboxView } from './views/GuestInboxView';
 
-import { auth, db } from './firebase';
+import { auth, db, handleFirestoreError, OperationType } from './firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { collection, onSnapshot, query, setDoc, doc, addDoc, updateDoc, getDoc, where } from 'firebase/firestore';
 import { ADMIN_EMAILS } from './config/admins';
+import textos from './content/textos.json';
 
 export default function App() {
   // Navigation & View State
@@ -191,8 +192,15 @@ export default function App() {
   }, [hasUnsavedChanges]);
 
   // Save app data to Firestore
-  const saveAppData = async (newHouses: House[], newRooms: Record<string, Room[]>, newBlogPosts: BlogPost[], newHostProfile: HostProfile) => {
+  const saveAppData = async (
+    newHouses: House[], 
+    newRooms: Record<string, Room[]>, 
+    newBlogPosts: BlogPost[], 
+    newHostProfile: HostProfile,
+    customMessage?: string
+  ) => {
     if (loadFailed) return;
+    setIsSaving(true);
     try {
       await setDoc(doc(db, 'appData/main'), {
         houses: newHouses,
@@ -200,18 +208,173 @@ export default function App() {
         blogPosts: newBlogPosts,
         hostProfile: newHostProfile
       });
-      showToast("Datos guardados con éxito.");
+      showToast(customMessage || textos.notificaciones.datosSincronizados);
       setHasUnsavedChanges(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to save app data", err);
-      showToast("Error al guardar los datos.");
+      if (err.code === 'permission-denied' || (err.message && err.message.includes('permission'))) {
+        try {
+          handleFirestoreError(err, OperationType.WRITE, 'appData/main');
+        } catch {
+          showToast("Aviso: Se requiere iniciar sesión con la cuenta de anfitriona para guardar.");
+        }
+      } else {
+        showToast(textos.notificaciones.errorGuardar);
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleManualSave = async () => {
-    setIsSaving(true);
-    await saveAppData(houses, roomsByHouse, blogPosts, hostProfile);
-    setIsSaving(false);
+    await saveAppData(houses, roomsByHouse, blogPosts, hostProfile, textos.notificaciones.datosSincronizados);
+  };
+
+  // ==========================================
+  // Gestiones de la Anfitriona (Panel)
+  // ==========================================
+
+  // 1. Alojamientos
+  const handleSaveHouse = async (houseData: House, isEdit: boolean) => {
+    let updatedHouses: House[];
+    const updatedRooms = { ...roomsByHouse };
+
+    if (isEdit) {
+      updatedHouses = houses.map(h => (h.id === houseData.id ? houseData : h));
+    } else {
+      updatedHouses = [houseData, ...houses];
+      if (!updatedRooms[houseData.id]) {
+        updatedRooms[houseData.id] = [];
+      }
+    }
+
+    setHouses(updatedHouses);
+    setRoomsByHouse(updatedRooms);
+    if (!isEdit) {
+      setSelectedHouseId(houseData.id);
+    }
+    setHasUnsavedChanges(true);
+    await saveAppData(
+      updatedHouses,
+      updatedRooms,
+      blogPosts,
+      hostProfile,
+      isEdit ? `Alojamiento "${houseData.name}" actualizado.` : `Alojamiento "${houseData.name}" creado con éxito.`
+    );
+  };
+
+  const handleDeleteHouse = async (houseId: string) => {
+    const targetHouse = houses.find(h => h.id === houseId);
+    const updatedHouses = houses.filter(h => h.id !== houseId);
+    const updatedRooms = { ...roomsByHouse };
+    delete updatedRooms[houseId];
+
+    setHouses(updatedHouses);
+    setRoomsByHouse(updatedRooms);
+    if (selectedHouseId === houseId) {
+      setSelectedHouseId(updatedHouses[0]?.id || '');
+    }
+    setHasUnsavedChanges(true);
+    await saveAppData(
+      updatedHouses,
+      updatedRooms,
+      blogPosts,
+      hostProfile,
+      `Alojamiento "${targetHouse?.name || houseId}" eliminado.`
+    );
+  };
+
+  // 2. Habitaciones
+  const handleSaveRoom = async (targetHouseId: string, roomData: Room, isEdit: boolean, originalHouseId?: string) => {
+    const updatedRooms = { ...roomsByHouse };
+
+    if (isEdit && originalHouseId && originalHouseId !== targetHouseId) {
+      updatedRooms[originalHouseId] = (updatedRooms[originalHouseId] || []).filter(r => r.id !== roomData.id);
+      updatedRooms[targetHouseId] = [...(updatedRooms[targetHouseId] || []), roomData];
+    } else if (isEdit) {
+      updatedRooms[targetHouseId] = (updatedRooms[targetHouseId] || []).map(r => r.id === roomData.id ? roomData : r);
+    } else {
+      updatedRooms[targetHouseId] = [...(updatedRooms[targetHouseId] || []), roomData];
+    }
+
+    let updatedHouses = [...houses];
+    const targetRooms = updatedRooms[targetHouseId] || [];
+    if (targetRooms.length > 0) {
+      const minPrice = Math.min(...targetRooms.map(r => r.price));
+      updatedHouses = updatedHouses.map(h => (h.id === targetHouseId ? { ...h, pricePerNight: minPrice } : h));
+      setHouses(updatedHouses);
+    }
+
+    setRoomsByHouse(updatedRooms);
+    setHasUnsavedChanges(true);
+    await saveAppData(
+      updatedHouses,
+      updatedRooms,
+      blogPosts,
+      hostProfile,
+      isEdit ? `Habitación "${roomData.name}" actualizada.` : `Habitación "${roomData.name}" creada con éxito.`
+    );
+  };
+
+  const handleDeleteRoom = async (houseId: string, roomId: string) => {
+    const currentRooms = roomsByHouse[houseId] || [];
+    const targetRoom = currentRooms.find(r => r.id === roomId);
+    const remainingRooms = currentRooms.filter(r => r.id !== roomId);
+    const updatedRooms = {
+      ...roomsByHouse,
+      [houseId]: remainingRooms
+    };
+
+    let updatedHouses = [...houses];
+    if (remainingRooms.length > 0) {
+      const minPrice = Math.min(...remainingRooms.map(r => r.price));
+      updatedHouses = updatedHouses.map(h => (h.id === houseId ? { ...h, pricePerNight: minPrice } : h));
+      setHouses(updatedHouses);
+    }
+
+    setRoomsByHouse(updatedRooms);
+    setHasUnsavedChanges(true);
+    await saveAppData(
+      updatedHouses,
+      updatedRooms,
+      blogPosts,
+      hostProfile,
+      `Habitación "${targetRoom?.name || roomId}" eliminada.`
+    );
+  };
+
+  // 3. Historias
+  const handleSaveStory = async (storyData: BlogPost, isEdit: boolean) => {
+    let updatedStories: BlogPost[];
+    if (isEdit) {
+      updatedStories = blogPosts.map(b => (b.id === storyData.id ? storyData : b));
+    } else {
+      updatedStories = [storyData, ...blogPosts];
+    }
+
+    setBlogPosts(updatedStories);
+    setHasUnsavedChanges(true);
+    await saveAppData(
+      houses,
+      roomsByHouse,
+      updatedStories,
+      hostProfile,
+      isEdit ? `Historia "${storyData.title}" actualizada.` : `Historia "${storyData.title}" publicada en el blog.`
+    );
+  };
+
+  const handleDeleteStory = async (storyId: string) => {
+    const targetStory = blogPosts.find(b => b.id === storyId);
+    const updatedStories = blogPosts.filter(b => b.id !== storyId);
+    setBlogPosts(updatedStories);
+    setHasUnsavedChanges(true);
+    await saveAppData(
+      houses,
+      roomsByHouse,
+      updatedStories,
+      hostProfile,
+      `Historia "${targetStory?.title || storyId}" eliminada.`
+    );
   };
 
   useEffect(() => {
@@ -257,8 +420,8 @@ export default function App() {
     if (page === 'dashboard') {
       const isHost = user && user.role === 'host';
       if (!isHost) {
-        showToast('🔒 Access denied. Private host credentials required.');
-        setCurrentPage('home');
+        showToast('🔒 Inicia sesión con la cuenta de la dueña (admin) para acceder al panel.');
+        setLoginModalOpen(true);
         return;
       }
     }
@@ -865,6 +1028,12 @@ export default function App() {
             setHasUnsavedChanges={setHasUnsavedChanges}
             isSaving={isSaving}
             handleManualSave={handleManualSave}
+            onSaveHouse={handleSaveHouse}
+            onDeleteHouse={handleDeleteHouse}
+            onSaveRoom={handleSaveRoom}
+            onDeleteRoom={handleDeleteRoom}
+            onSaveStory={handleSaveStory}
+            onDeleteStory={handleDeleteStory}
           />
         )}
         {/* 6. GUEST INBOX VIEW */}

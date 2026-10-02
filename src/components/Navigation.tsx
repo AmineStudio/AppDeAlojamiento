@@ -61,12 +61,20 @@ export function Navigation({
             >
               Contact
             </button>
-            {user && user.role === 'host' && (
+            {user && user.role === 'host' ? (
               <button 
                 onClick={() => handleNavigate('dashboard')} 
-                className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${currentPage === 'dashboard' ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
+                className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${currentPage === 'dashboard' ? 'bg-[#A7AB5E] text-white shadow-md' : 'text-[#A7AB5E] font-bold hover:bg-[#F5EFE0]'}`}
               >
-                Dashboard
+                <span>👑</span> Admin Dashboard
+              </button>
+            ) : (
+              <button 
+                onClick={() => handleNavigate('dashboard')} 
+                className="py-2 px-4 rounded-full text-[11px] font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] transition-all"
+                title="Acceso para la dueña / administradora"
+              >
+                Admin
               </button>
             )}
           </div>
@@ -161,12 +169,19 @@ export function Navigation({
             >
               Contact
             </button>
-            {user && user.role === 'host' && (
+            {user && user.role === 'host' ? (
               <button 
                 onClick={() => { handleNavigate('dashboard'); setMobileMenuOpen(false); }} 
-                className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
+                className="text-left text-sm font-bold uppercase tracking-wider text-[#A7AB5E] flex items-center gap-1.5"
               >
-                Dashboard
+                <span>👑</span> Admin Dashboard
+              </button>
+            ) : (
+              <button 
+                onClick={() => { handleNavigate('dashboard'); setMobileMenuOpen(false); }} 
+                className="text-left text-sm font-semibold uppercase tracking-wider text-[#6E727C]"
+              >
+                Acceso Dueña (Admin)
               </button>
             )}
             

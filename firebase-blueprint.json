@@ -1,5 +1,86 @@
 {
   "entities": {
+    "House": {
+      "title": "House",
+      "description": "A boutique shared house accommodation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "description": { "type": "string" },
+        "pricePerNight": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "beds": { "type": "string" },
+        "guests": { "type": "number" },
+        "tag": { "type": "string" },
+        "tagClass": { "type": "string" },
+        "images": { "type": "array" },
+        "features": { "type": "array" }
+      },
+      "required": ["id", "name", "location", "description", "pricePerNight", "beds", "guests"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "An individual room inside a shared house.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "available": { "type": "boolean" },
+        "images": { "type": "array" },
+        "beds": { "type": "string" },
+        "view": { "type": "string" }
+      },
+      "required": ["id", "name", "description", "price", "available", "beds", "view"]
+    },
+    "BlogPost": {
+      "title": "BlogPost",
+      "description": "A travel story or local guide article written by the host.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "category": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "author": { "type": "string" },
+        "readTime": { "type": "string" },
+        "publishedDate": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "category", "title", "excerpt", "content", "author", "image"]
+    },
+    "HostProfile": {
+      "title": "HostProfile",
+      "description": "Profile information for Host Mila.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "bio": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" }
+      },
+      "required": ["name", "title", "bio", "email"]
+    },
+    "AppData": {
+      "title": "AppData",
+      "description": "Persistent document storing houses, rooms, stories, and host profile.",
+      "type": "object",
+      "properties": {
+        "houses": { "type": "array" },
+        "roomsByHouse": { "type": "object" },
+        "blogPosts": { "type": "array" },
+        "hostProfile": { "type": "object" }
+      },
+      "required": ["houses", "roomsByHouse", "blogPosts", "hostProfile"]
+    },
     "Review": {
       "title": "Review",
       "description": "A review for a house.",
@@ -41,6 +122,10 @@
     }
   },
   "firestore": {
+    "/appData/{docId}": {
+      "schema": { "$ref": "#/entities/AppData" },
+      "description": "Master storage for houses, rooms, stories, and profile."
+    },
     "/houses/{houseId}/reviews/{reviewId}": {
       "schema": { "$ref": "#/entities/Review" },
       "description": "Reviews for a specific house."
@@ -55,3 +140,4 @@
     }
   }
 }
+
