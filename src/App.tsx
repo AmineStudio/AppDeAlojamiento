@@ -50,9 +50,12 @@ import { DashboardView } from './views/DashboardView';
 import { DetailView } from './views/DetailView';
 import { GuestInboxView } from './views/GuestInboxView';
 
+import { useAuth } from './contexts/AuthContext';
+import { useData } from './contexts/DataContext';
+
 import { auth, db, handleFirestoreError, OperationType } from './firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { collection, onSnapshot, query, setDoc, doc, addDoc, updateDoc, getDoc, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, setDoc, doc, addDoc, updateDoc, getDoc, where, deleteDoc, writeBatch } from 'firebase/firestore';
 import { ADMIN_EMAILS } from './config/admins';
 import textos from './content/textos.json';
 
@@ -62,17 +65,13 @@ export default function App() {
   const [selectedHouseId, setSelectedHouseId] = useState<string>('leon-y-castillo');
   const [houseCategory, setHouseCategory] = useState<string>('All stays');
 
-  // Core Data State (Simulating persistent full-stack reactive store)
-  const [isAppDataLoaded, setIsAppDataLoaded] = useState(false);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [houses, setHouses] = useState<House[]>(initialHouses);
-  const [roomsByHouse, setRoomsByHouse] = useState<Record<string, Room[]>>(initialRooms);
-  const [reviewsByHouse, setReviewsByHouse] = useState<Record<string, GuestReview[]>>(initialReviews);
-  const [inquiries, setInquiries] = useState<MessageInquiry[]>(initialInquiries);
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(initialBlogPosts);
-  const [hostProfile, setHostProfile] = useState<HostProfile>(initialHostProfile);
+  // Core Data State (Traído desde DataContext)
+  const {
+    isAppDataLoaded, loadFailed, hasUnsavedChanges, setHasUnsavedChanges,
+    isSaving, setIsSaving, houses, setHouses, roomsByHouse, setRoomsByHouse,
+    reviewsByHouse, setReviewsByHouse, inquiries, setInquiries,
+    blogPosts, setBlogPosts, hostProfile, setHostProfile
+  } = useData();
   const [pastBookings, setPastBookings] = useState<{guestEmail: string, houseId: string}[]>([
     { guestEmail: 'guest@example.com', houseId: 'leon-y-castillo' },
     { guestEmail: 'amine.saidani.101@gmail.com', houseId: 'leon-y-castillo' }
@@ -84,8 +83,7 @@ export default function App() {
   }, [houses, selectedHouseId]);
 
   // Auth State
-  const [user, setUser] = useState<{ name: string; email: string; role: 'guest' | 'host' } | null>(null);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const { user, loginModalOpen, setLoginModalOpen, triggerLoginModal, logout, loginWithGoogle } = useAuth();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -156,41 +154,6 @@ export default function App() {
     }
   }, [activeHouse, roomsByHouse]);
 
-  // Load app data from Firestore on mount
-  useEffect(() => {
-    const loadAppData = async () => {
-      try {
-        const docRef = doc(db, 'appData/main');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.houses) setHouses(data.houses);
-          if (data.roomsByHouse) setRoomsByHouse(data.roomsByHouse);
-          if (data.blogPosts) setBlogPosts(data.blogPosts);
-          if (data.hostProfile) setHostProfile(data.hostProfile);
-        }
-      } catch (err) {
-        console.error("Failed to load app data from Firestore", err);
-        setLoadFailed(true);
-      } finally {
-        setIsAppDataLoaded(true);
-      }
-    };
-    loadAppData();
-  }, []);
-
-  // Beforeunload listener
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
   // Save app data to Firestore
   const saveAppData = async (
     newHouses: House[], 
@@ -253,14 +216,13 @@ export default function App() {
     if (!isEdit) {
       setSelectedHouseId(houseData.id);
     }
-    setHasUnsavedChanges(true);
-    await saveAppData(
-      updatedHouses,
-      updatedRooms,
-      blogPosts,
-      hostProfile,
-      isEdit ? `Alojamiento "${houseData.name}" actualizado.` : `Alojamiento "${houseData.name}" creado con éxito.`
-    );
+
+    try {
+      await setDoc(doc(db, 'houses', houseData.id), houseData);
+      showToast(isEdit ? `Alojamiento "${houseData.name}" actualizado.` : `Alojamiento "${houseData.name}" creado con éxito.`);
+    } catch (err: any) {
+      showToast('Error al guardar: ' + err.message);
+    }
   };
 
   const handleDeleteHouse = async (houseId: string) => {
@@ -274,14 +236,13 @@ export default function App() {
     if (selectedHouseId === houseId) {
       setSelectedHouseId(updatedHouses[0]?.id || '');
     }
-    setHasUnsavedChanges(true);
-    await saveAppData(
-      updatedHouses,
-      updatedRooms,
-      blogPosts,
-      hostProfile,
-      `Alojamiento "${targetHouse?.name || houseId}" eliminado.`
-    );
+
+    try {
+      await deleteDoc(doc(db, 'houses', houseId));
+      showToast(`Alojamiento "${targetHouse?.name || houseId}" eliminado.`);
+    } catch (err: any) {
+      showToast('Error al eliminar: ' + err.message);
+    }
   };
 
   // 2. Habitaciones
@@ -306,14 +267,21 @@ export default function App() {
     }
 
     setRoomsByHouse(updatedRooms);
-    setHasUnsavedChanges(true);
-    await saveAppData(
-      updatedHouses,
-      updatedRooms,
-      blogPosts,
-      hostProfile,
-      isEdit ? `Habitación "${roomData.name}" actualizada.` : `Habitación "${roomData.name}" creada con éxito.`
-    );
+
+    try {
+      if (isEdit && originalHouseId && originalHouseId !== targetHouseId) {
+        await deleteDoc(doc(db, `houses/${originalHouseId}/rooms`, roomData.id));
+      }
+      await setDoc(doc(db, `houses/${targetHouseId}/rooms`, roomData.id), roomData);
+      
+      if (targetRooms.length > 0) {
+        const minPrice = Math.min(...targetRooms.map(r => r.price));
+        await updateDoc(doc(db, 'houses', targetHouseId), { pricePerNight: minPrice });
+      }
+      showToast(isEdit ? `Habitación "${roomData.name}" actualizada.` : `Habitación "${roomData.name}" creada con éxito.`);
+    } catch (err: any) {
+      showToast('Error al guardar: ' + err.message);
+    }
   };
 
   const handleDeleteRoom = async (houseId: string, roomId: string) => {
@@ -326,21 +294,24 @@ export default function App() {
     };
 
     let updatedHouses = [...houses];
+    let minPrice = 0;
     if (remainingRooms.length > 0) {
-      const minPrice = Math.min(...remainingRooms.map(r => r.price));
+      minPrice = Math.min(...remainingRooms.map(r => r.price));
       updatedHouses = updatedHouses.map(h => (h.id === houseId ? { ...h, pricePerNight: minPrice } : h));
       setHouses(updatedHouses);
     }
 
     setRoomsByHouse(updatedRooms);
-    setHasUnsavedChanges(true);
-    await saveAppData(
-      updatedHouses,
-      updatedRooms,
-      blogPosts,
-      hostProfile,
-      `Habitación "${targetRoom?.name || roomId}" eliminada.`
-    );
+
+    try {
+      await deleteDoc(doc(db, `houses/${houseId}/rooms`, roomId));
+      if (remainingRooms.length > 0) {
+        await updateDoc(doc(db, 'houses', houseId), { pricePerNight: minPrice });
+      }
+      showToast(`Habitación "${targetRoom?.name || roomId}" eliminada.`);
+    } catch (err: any) {
+      showToast('Error al eliminar: ' + err.message);
+    }
   };
 
   // 3. Historias
@@ -353,48 +324,28 @@ export default function App() {
     }
 
     setBlogPosts(updatedStories);
-    setHasUnsavedChanges(true);
-    await saveAppData(
-      houses,
-      roomsByHouse,
-      updatedStories,
-      hostProfile,
-      isEdit ? `Historia "${storyData.title}" actualizada.` : `Historia "${storyData.title}" publicada en el blog.`
-    );
+
+    try {
+      await setDoc(doc(db, 'blogPosts', storyData.id), storyData);
+      showToast(isEdit ? `Historia "${storyData.title}" actualizada.` : `Historia "${storyData.title}" publicada en el blog.`);
+    } catch (err: any) {
+      showToast('Error al guardar: ' + err.message);
+    }
   };
 
   const handleDeleteStory = async (storyId: string) => {
     const targetStory = blogPosts.find(b => b.id === storyId);
     const updatedStories = blogPosts.filter(b => b.id !== storyId);
     setBlogPosts(updatedStories);
-    setHasUnsavedChanges(true);
-    await saveAppData(
-      houses,
-      roomsByHouse,
-      updatedStories,
-      hostProfile,
-      `Historia "${targetStory?.title || storyId}" eliminada.`
-    );
+
+    try {
+      await deleteDoc(doc(db, 'blogPosts', storyId));
+      showToast(`Historia "${targetStory?.title || storyId}" eliminada.`);
+    } catch (err: any) {
+      showToast('Error al eliminar: ' + err.message);
+    }
   };
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(firebaseUser => {
-      if (firebaseUser) {
-        if (firebaseUser.emailVerified) {
-          const email = firebaseUser.email || '';
-          const name = firebaseUser.displayName || email.split('@')[0];
-          const role = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'host' : 'guest';
-          setUser({ name, email, role });
-        } else {
-          // Keep them logged out until they verify
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() => {
     if (activeHouse) {
@@ -436,14 +387,10 @@ export default function App() {
   };
 
   // Auth Handling
-  const triggerLoginModal = () => {
-    setLoginModalOpen(true);
-  };
 
   const executeSignOut = async () => {
     try {
-      await signOut(auth);
-      setUser(null);
+      await logout();
       setUserDropdownOpen(false);
       setCurrentPage('home');
       setEligibleReviewPending(true);
@@ -718,7 +665,8 @@ export default function App() {
   };
 
   // Host Action: Save and update room rates on active listing
-  const handleHostSavePricing = () => {
+  // Host Action: Save and update room rates on active listing
+  const handleHostSavePricing = async () => {
     const activeRooms = roomsByHouse[activeHouse.id] || [];
     const updated = activeRooms.map(r => {
       if (editPricePrefix[r.id] !== undefined) {
@@ -733,8 +681,9 @@ export default function App() {
     }));
 
     // Update base price of House listing dynamically
+    let minPrice = activeHouse.pricePerNight;
     if (updated.length > 0) {
-      const minPrice = Math.min(...updated.map(r => r.price));
+      minPrice = Math.min(...updated.map(r => r.price));
       setHouses(prev => prev.map(h => {
         if (h.id === activeHouse.id) {
           return { ...h, pricePerNight: minPrice };
@@ -743,12 +692,21 @@ export default function App() {
       }));
     }
 
-    setHasUnsavedChanges(true);
-    showToast('✔️ Rooms rates updated in memory. Please click "Guardar cambios".');
+    try {
+      const batch = writeBatch(db);
+      updated.forEach(r => {
+        batch.update(doc(db, `houses/${activeHouse.id}/rooms`, r.id), { price: r.price });
+      });
+      batch.update(doc(db, 'houses', activeHouse.id), { pricePerNight: minPrice });
+      await batch.commit();
+      showToast('✔️ Precios actualizados y guardados correctamente.');
+    } catch (err: any) {
+      showToast('Error al guardar precios: ' + err.message);
+    }
   };
 
   // Host Action: Publish a new blog story
-  const handlePublishStory = () => {
+  const handlePublishStory = async () => {
     if (!newBlogTitle.trim() || !newBlogContent.trim()) {
       showToast('Please fill in a title and the content story.');
       return;
@@ -768,10 +726,16 @@ export default function App() {
     };
 
     setBlogPosts(prev => [newStory, ...prev]);
-    setNewBlogTitle('');
-    setNewBlogExcerpt('');
-    setNewBlogContent('');
-    showToast('✍️ New Story published to Mila\'s blog page!');
+    
+    try {
+      await setDoc(doc(db, 'blogPosts', newStory.id), newStory);
+      setNewBlogTitle('');
+      setNewBlogExcerpt('');
+      setNewBlogContent('');
+      showToast('✍️ New Story published to Mila\'s blog page!');
+    } catch (err: any) {
+      showToast('Error al publicar: ' + err.message);
+    }
   };
 
   // Helper: toggle inbox messages read state
@@ -787,7 +751,7 @@ export default function App() {
   };
 
   // Helper: toggle room base availability (Host dashboard switches)
-  const toggleRoomAvailableOnDash = (roomId: string) => {
+  const toggleRoomAvailableOnDash = async (roomId: string) => {
     const list = roomsByHouse[activeHouse.id] || [];
     const updated = list.map(r => {
       if (r.id === roomId) {
@@ -799,7 +763,15 @@ export default function App() {
       ...prev,
       [activeHouse.id]: updated
     }));
-    setHasUnsavedChanges(true);
+    
+    try {
+      const room = updated.find(r => r.id === roomId);
+      if (room) {
+        await updateDoc(doc(db, `houses/${activeHouse.id}/rooms`, roomId), { available: room.available });
+      }
+    } catch (err: any) {
+      showToast('Error al guardar disponibilidad: ' + err.message);
+    }
   };
 
   // Photo Management Handlers
@@ -816,44 +788,59 @@ export default function App() {
     setPhotoModalOpen(true);
   };
 
-  const handleConfirmAddPhoto = (url: string) => {
+  const handleConfirmAddPhoto = async (url: string) => {
     if (!photoModalTarget) return;
 
-    if (photoModalTarget.type === 'house') {
-      setHouses(prev => prev.map(h => h.id === activeHouse.id ? { ...h, images: [...h.images, url] } : h));
-      setHasUnsavedChanges(true);
-      showToast("📸 Photo added successfully to the house gallery.");
-    } else if (photoModalTarget.type === 'room') {
-      setRoomsByHouse(prev => ({
-        ...prev,
-        [activeHouse.id]: prev[activeHouse.id].map(r => 
-          r.id === photoModalTarget.id ? { ...r, images: [...r.images, url] } : r
-        )
-      }));
-      setHasUnsavedChanges(true);
-      showToast("📸 Photo added successfully to the room gallery.");
+    try {
+      if (photoModalTarget.type === 'house') {
+        const newImages = [...activeHouse.images, url];
+        setHouses(prev => prev.map(h => h.id === activeHouse.id ? { ...h, images: newImages } : h));
+        await updateDoc(doc(db, 'houses', activeHouse.id), { images: newImages });
+        showToast("📸 Photo added successfully to the house gallery.");
+      } else if (photoModalTarget.type === 'room') {
+        const rooms = roomsByHouse[activeHouse.id] || [];
+        const room = rooms.find(r => r.id === photoModalTarget.id);
+        if (room) {
+          const newImages = [...room.images, url];
+          setRoomsByHouse(prev => ({
+            ...prev,
+            [activeHouse.id]: prev[activeHouse.id].map(r => 
+              r.id === photoModalTarget.id ? { ...r, images: newImages } : r
+            )
+          }));
+          await updateDoc(doc(db, `houses/${activeHouse.id}/rooms`, photoModalTarget.id), { images: newImages });
+          showToast("📸 Photo added successfully to the room gallery.");
+        }
+      }
+    } catch (err: any) {
+      showToast('Error al guardar la foto: ' + err.message);
     }
   };
 
-  const handleRemoveHousePhoto = (index: number) => {
+  const handleRemoveHousePhoto = async (index: number) => {
+    const newImages = [...activeHouse.images];
+    newImages.splice(index, 1);
+    
     setHouses(prev => prev.map(h => {
-      if (h.id === activeHouse.id) {
-        const newImages = [...h.images];
-        newImages.splice(index, 1);
-        return { ...h, images: newImages };
-      }
+      if (h.id === activeHouse.id) return { ...h, images: newImages };
       return h;
     }));
-    setHasUnsavedChanges(true);
-    showToast("📸 Photo removed from the house gallery.");
+    
+    try {
+      await updateDoc(doc(db, 'houses', activeHouse.id), { images: newImages });
+      showToast("📸 Photo removed from the house gallery.");
+    } catch (err: any) {
+      showToast('Error al borrar la foto: ' + err.message);
+    }
   };
 
-  const handleRemoveRoomPhoto = (roomId: string, index: number) => {
+  const handleRemoveRoomPhoto = async (roomId: string, index: number) => {
+    let newImages: string[] = [];
     setRoomsByHouse(prev => {
       const rooms = prev[activeHouse.id] || [];
       const updated = rooms.map(r => {
         if (r.id === roomId) {
-          const newImages = [...r.images];
+          newImages = [...r.images];
           newImages.splice(index, 1);
           return { ...r, images: newImages };
         }
@@ -861,8 +848,13 @@ export default function App() {
       });
       return { ...prev, [activeHouse.id]: updated };
     });
-    setHasUnsavedChanges(true);
-    showToast("📸 Photo removed from room gallery.");
+    
+    try {
+      await updateDoc(doc(db, `houses/${activeHouse.id}/rooms`, roomId), { images: newImages });
+      showToast("📸 Photo removed from room gallery.");
+    } catch (err: any) {
+      showToast('Error al borrar la foto: ' + err.message);
+    }
   }
 
   // Filtered houses

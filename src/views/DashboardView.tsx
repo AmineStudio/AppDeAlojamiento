@@ -26,6 +26,11 @@ import { StoryModal } from '../components/StoryModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import textos from '../content/textos.json';
 
+import { PropertiesTab } from './Dashboard/Tabs/PropertiesTab';
+import { StoriesTab } from './Dashboard/Tabs/StoriesTab';
+import { InquiriesTab } from './Dashboard/Tabs/InquiriesTab';
+import { SettingsTab } from './Dashboard/Tabs/SettingsTab';
+
 interface DashboardViewProps {
   user: { name: string; email: string; role: 'guest' | 'host' } | null;
   triggerLoginModal: (tab?: 'signin' | 'signup') => void;
@@ -356,873 +361,165 @@ export function DashboardView({
             {tPan.descripcion}
           </p>
         </div>
+      </div>
 
-        {/* Save button */}
-        <div className="flex items-center gap-3">
+      {/* Segmented Control Navigation (Floating Pill) */}
+      <div className="flex justify-center mb-10 mt-2">
+        <div className="relative flex p-1.5 bg-white/90 backdrop-blur-xl border border-[rgba(63,67,77,0.1)] shadow-sm rounded-full w-full max-w-4xl mx-auto">
+          
+          {/* Sliding Active Background Indicator */}
+          <div 
+            className="absolute top-1.5 bottom-1.5 bg-[#3F434D] rounded-full transition-transform duration-300 ease-out shadow-md"
+            style={{
+              width: 'calc(25% - 3px)',
+              left: '6px',
+              transform: 
+                (dashActiveTab === 'casas' || dashActiveTab === 'listings' || dashActiveTab === 'habitaciones') ? 'translateX(0%)' :
+                (dashActiveTab === 'historias' || dashActiveTab === 'stories') ? 'translateX(100%)' : 
+                (dashActiveTab === 'inquiries') ? 'translateX(200%)' :
+                'translateX(300%)'
+            }}
+          />
+
+          {/* TAB 1: Alojamientos */}
           <button
-            onClick={handleManualSave}
-            disabled={isSaving || loadFailed}
-            className={`py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 shadow-sm ${
-              hasUnsavedChanges
-                ? 'bg-[#A7AB5E] text-white hover:bg-[#888B47] animate-pulse'
-                : 'bg-white text-[#3F434D] border border-[rgba(63,67,77,0.12)] hover:bg-[#F5EFE0]'
+            onClick={() => setDashActiveTab('casas')}
+            className={`relative z-10 w-1/4 flex items-center justify-center gap-2 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+              dashActiveTab === 'casas' || dashActiveTab === 'listings' || dashActiveTab === 'habitaciones'
+                ? 'text-white'
+                : 'text-[#6E727C] hover:text-[#3F434D]'
             }`}
           >
-            {isSaving ? (
-              <>
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" /> {tGen.guardando}
-              </>
-            ) : hasUnsavedChanges ? (
-              <>
-                <Sparkles className="h-3.5 w-3.5" /> {tGen.guardarCambios}
-              </>
+            <Home className="h-4 w-4" />
+            <span className="hidden sm:inline">Alojamientos</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors ${
+              dashActiveTab === 'casas' || dashActiveTab === 'listings' || dashActiveTab === 'habitaciones'
+                ? 'bg-white/20 text-white' : 'bg-[#FBF7EC] text-[#6E727C] group-hover:bg-[#F5EFE0]'
+            }`}>
+              {houses.length}
+            </span>
+          </button>
+
+          {/* TAB 2: Historias */}
+          <button
+            onClick={() => setDashActiveTab('historias')}
+            className={`relative z-10 w-1/4 flex items-center justify-center gap-2 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+              dashActiveTab === 'historias' || dashActiveTab === 'stories'
+                ? 'text-white'
+                : 'text-[#6E727C] hover:text-[#3F434D]'
+            }`}
+          >
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">{tPan.estadisticas.historias}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors ${
+              dashActiveTab === 'historias' || dashActiveTab === 'stories'
+                ? 'bg-white/20 text-white' : 'bg-[#FBF7EC] text-[#6E727C] group-hover:bg-[#F5EFE0]'
+            }`}>
+              {blogPosts.length}
+            </span>
+          </button>
+
+          {/* TAB 3: Consultas */}
+          <button
+            onClick={() => setDashActiveTab('inquiries')}
+            className={`relative z-10 w-1/4 flex items-center justify-center gap-2 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+              dashActiveTab === 'inquiries'
+                ? 'text-white'
+                : 'text-[#6E727C] hover:text-[#3F434D]'
+            }`}
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">{tPan.estadisticas.consultas}</span>
+            
+            {inquiries.filter(i => !i.read).length > 0 ? (
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors flex items-center gap-1.5 ${
+                dashActiveTab === 'inquiries'
+                  ? 'bg-amber-500 text-white shadow-inner' : 'bg-amber-100 text-amber-700 group-hover:bg-amber-200'
+              }`}>
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                </span>
+                {inquiries.filter(i => !i.read).length}
+              </span>
             ) : (
-              <>
-                <Check className="h-3.5 w-3.5 text-emerald-600" /> {tGen.todoGuardado}
-              </>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors ${
+                dashActiveTab === 'inquiries'
+                  ? 'bg-white/20 text-white' : 'bg-[#FBF7EC] text-[#6E727C] group-hover:bg-[#F5EFE0]'
+              }`}>
+                0
+              </span>
             )}
+          </button>
+
+          {/* TAB 4: Perfil de Anfitriona */}
+          <button
+            onClick={() => setDashActiveTab('settings')}
+            className={`relative z-10 w-1/4 flex items-center justify-center gap-2 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+              dashActiveTab === 'settings'
+                ? 'text-white'
+                : 'text-[#6E727C] hover:text-[#3F434D]'
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">{tPan.pestanas.ajustes}</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Stats Highlights */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
-        <div 
-          onClick={() => setDashActiveTab('casas')}
-          className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-        >
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#6E727C]">{tPan.estadisticas.casasActivas}</span>
-            <div className="h-7 w-7 rounded-full bg-[#F5EFE0] text-[#3D7A95] flex items-center justify-center group-hover:bg-[#3D7A95] group-hover:text-white transition-colors">
-              <Home className="h-3.5 w-3.5" />
-            </div>
-          </div>
-          <h3 className="font-display text-3xl font-extrabold text-[#3F434D] tracking-tight mt-1">
-            {houses.length}
-          </h3>
-          <p className="text-[9px] uppercase tracking-wider font-bold text-[#3D7A95] mt-1">
-            {tPan.estadisticas.verCasas} →
-          </p>
-        </div>
 
-        <div 
-          onClick={() => setDashActiveTab('habitaciones')}
-          className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-        >
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#6E727C]">{tPan.estadisticas.habitaciones}</span>
-            <div className="h-7 w-7 rounded-full bg-[#F5EFE0] text-[#A7AB5E] flex items-center justify-center group-hover:bg-[#A7AB5E] group-hover:text-white transition-colors">
-              <Bed className="h-3.5 w-3.5" />
-            </div>
-          </div>
-          <h3 className="font-display text-3xl font-extrabold text-[#A7AB5E] tracking-tight mt-1">
-            {allRoomsList.length}
-          </h3>
-          <p className="text-[9px] uppercase tracking-wider font-bold text-[#6E727C] mt-1">
-            {totalAvailableRooms} {tPan.estadisticas.libres} · {totalOccupiedRooms} {tPan.estadisticas.ocupadas}
-          </p>
-        </div>
-
-        <div 
-          onClick={() => setDashActiveTab('historias')}
-          className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-        >
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#6E727C]">{tPan.estadisticas.historias}</span>
-            <div className="h-7 w-7 rounded-full bg-[#F5EFE0] text-[#3D7A95] flex items-center justify-center group-hover:bg-[#3D7A95] group-hover:text-white transition-colors">
-              <BookOpen className="h-3.5 w-3.5" />
-            </div>
-          </div>
-          <h3 className="font-display text-3xl font-extrabold text-[#3F434D] tracking-tight mt-1">
-            {blogPosts.length}
-          </h3>
-          <p className="text-[9px] uppercase tracking-wider font-bold text-[#3D7A95] mt-1">
-            {tPan.estadisticas.verHistorias}
-          </p>
-        </div>
-
-        <div 
-          onClick={() => setDashActiveTab('inquiries')}
-          className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-        >
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#6E727C]">{tPan.estadisticas.consultas}</span>
-            <div className="h-7 w-7 rounded-full bg-[#F5EFE0] text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors">
-              <MessageSquare className="h-3.5 w-3.5" />
-            </div>
-          </div>
-          <h3 className="font-display text-3xl font-extrabold text-[#3F434D] tracking-tight mt-1">
-            {inquiries.filter(i => !i.read).length}
-          </h3>
-          <p className="text-[9px] uppercase tracking-wider font-bold text-[#6E727C] mt-1">
-            {tPan.estadisticas.mensajesPendientes}
-          </p>
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex gap-2 flex-wrap mb-8 border-b border-[rgba(63,67,77,0.08)] pb-4">
-        <button
-          onClick={() => setDashActiveTab('casas')}
-          className={`py-2.5 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            dashActiveTab === 'casas' || dashActiveTab === 'listings'
-              ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md'
-              : 'bg-white text-[#6E727C] hover:text-[#3F434D] border border-[rgba(63,67,77,0.08)]'
-          }`}
-        >
-          <Home className="h-3.5 w-3.5" />
-          {tPan.pestanas.casas} ({houses.length})
-        </button>
-
-        <button
-          onClick={() => setDashActiveTab('habitaciones')}
-          className={`py-2.5 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            dashActiveTab === 'habitaciones'
-              ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md'
-              : 'bg-white text-[#6E727C] hover:text-[#3F434D] border border-[rgba(63,67,77,0.08)]'
-          }`}
-        >
-          <Bed className="h-3.5 w-3.5" />
-          {tPan.pestanas.habitaciones} ({allRoomsList.length})
-        </button>
-
-        <button
-          onClick={() => setDashActiveTab('historias')}
-          className={`py-2.5 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            dashActiveTab === 'historias' || dashActiveTab === 'stories'
-              ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md'
-              : 'bg-white text-[#6E727C] hover:text-[#3F434D] border border-[rgba(63,67,77,0.08)]'
-          }`}
-        >
-          <BookOpen className="h-3.5 w-3.5" />
-          {tPan.pestanas.historias} ({blogPosts.length})
-        </button>
-
-        <button
-          onClick={() => setDashActiveTab('inquiries')}
-          className={`py-2.5 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            dashActiveTab === 'inquiries'
-              ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md'
-              : 'bg-white text-[#6E727C] hover:text-[#3F434D] border border-[rgba(63,67,77,0.08)]'
-          }`}
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          {tPan.pestanas.consultas}{' '}
-          {inquiries.filter(i => !i.read).length > 0 && (
-            <span className="h-4.5 min-w-4.5 px-1 bg-[#A7AB5E] text-white rounded-full text-[9px] font-bold flex items-center justify-center">
-              {inquiries.filter(i => !i.read).length}
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={() => setDashActiveTab('settings')}
-          className={`py-2.5 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
-            dashActiveTab === 'settings'
-              ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md'
-              : 'bg-white text-[#6E727C] hover:text-[#3F434D] border border-[rgba(63,67,77,0.08)]'
-          }`}
-        >
-          <Settings className="h-3.5 w-3.5" />
-          {tPan.pestanas.ajustes}
-        </button>
-      </div>
 
       {/* ========================================================================= */}
-      {/* SECCIÓN 1: ALOJAMIENTOS                                                   */}
+      {/* SECCIÓN 1: ALOJAMIENTOS Y HABITACIONES                                    */}
       {/* ========================================================================= */}
-      {(dashActiveTab === 'casas' || dashActiveTab === 'listings') && (
-        <div className="space-y-6">
-          {/* Action bar */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-[rgba(63,67,77,0.08)] shadow-sm">
-            <div className="relative w-full sm:w-72">
-              <input
-                type="text"
-                placeholder={tCas.buscarPlaceholder}
-                value={houseSearch}
-                onChange={(e) => setHouseSearch(e.target.value)}
-                className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.1)] py-2 pl-9 pr-3 rounded-xl text-xs outline-none focus:border-[#3D7A95]"
-              />
-              <Search className="h-4 w-4 text-[#6E727C] absolute left-3 top-2.5" />
-            </div>
-
-            <button
-              onClick={handleOpenCreateHouse}
-              className="py-2.5 px-5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-white hover:bg-[#888B47] shadow-md transition-all flex items-center gap-2 shrink-0"
-            >
-              <Plus className="h-4 w-4" />
-              {tCas.botonNueva}
-            </button>
-          </div>
-
-          {/* Houses Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredHouses.map((house) => {
-              const houseRooms = roomsByHouse[house.id] || [];
-              return (
-                <div
-                  key={house.id}
-                  className="bg-white rounded-3xl overflow-hidden border border-[rgba(63,67,77,0.08)] shadow-sm hover:shadow-lg transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Image banner with badges */}
-                    <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
-                      <img
-                        src={house.images[0] || 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800'}
-                        alt={house.name}
-                        className="w-full h-full object-cover"
-                      />
-                      {house.tag && (
-                        <span className="absolute top-3 left-3 bg-white text-[#3F434D] font-bold text-[10px] tracking-wider uppercase py-1 px-3 rounded-full shadow-md">
-                          {house.tag}
-                        </span>
-                      )}
-                      <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
-                        {house.images.length} {house.images.length === 1 ? 'foto' : 'fotos'}
-                      </span>
-                    </div>
-
-                    {/* House Details */}
-                    <div className="p-5">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] mb-1">
-                        <MapPin className="h-3 w-3" /> {house.location}
-                      </div>
-                      <h3 className="font-display font-medium text-xl text-[#3F434D] mb-2 leading-snug">
-                        {house.name}
-                      </h3>
-                      <p className="text-xs text-[#6E727C] line-clamp-2 leading-relaxed mb-4">
-                        {house.description}
-                      </p>
-
-                      <div className="grid grid-cols-3 gap-2 py-3 border-y border-[rgba(63,67,77,0.06)] text-center text-xs">
-                        <div>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#6E727C] block">{tCas.baseNoche}</span>
-                          <span className="font-bold text-[#3F434D]">€{house.pricePerNight}</span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#6E727C] block">{tCas.habitaciones}</span>
-                          <span className="font-bold text-[#A7AB5E]">{houseRooms.length}</span>
-                        </div>
-                        <div>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#6E727C] block">{tCas.capacidad}</span>
-                          <span className="font-bold text-[#3F434D]">{tCas.maxHuespedes} {house.guests}</span>
-                        </div>
-                      </div>
-
-                      {/* Amenities chips */}
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {house.features.slice(0, 3).map((f, idx) => (
-                          <span key={idx} className="bg-[#FBF7EC] text-[#6E727C] text-[10px] px-2 py-0.5 rounded-md font-medium">
-                            {f}
-                          </span>
-                        ))}
-                        {house.features.length > 3 && (
-                          <span className="text-[10px] text-[#A7AB5E] font-semibold self-center">
-                            +{house.features.length - 3} más
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions Footer */}
-                  <div className="p-4 bg-[#FBF7EC] border-t border-[rgba(63,67,77,0.06)] flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => {
-                        setRoomHouseFilter(house.id);
-                        setDashActiveTab('habitaciones');
-                      }}
-                      className="py-1.5 px-3 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#3D7A95] flex items-center gap-1 transition-colors"
-                      title="Ver y gestionar habitaciones de este alojamiento"
-                    >
-                      <Bed className="h-3 w-3" /> {tCas.verHabitaciones} ({houseRooms.length})
-                    </button>
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => handleNavigate('detail', { houseId: house.id })}
-                        className="h-8 w-8 rounded-xl bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] text-[#6E727C] flex items-center justify-center transition-colors"
-                        title={tCas.verEnWeb}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </button>
-
-                      <button
-                        onClick={() => handleOpenEditHouse(house)}
-                        className="py-1.5 px-3 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#3F434D] hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#3F434D] flex items-center gap-1 transition-all"
-                      >
-                        <Edit3 className="h-3 w-3" /> {tGen.editar}
-                      </button>
-
-                      <button
-                        onClick={() => handleTriggerDeleteHouse(house)}
-                        className="h-8 w-8 rounded-xl bg-white border border-[rgba(63,67,77,0.1)] hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors"
-                        title={tGen.eliminar}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {filteredHouses.length === 0 && (
-            <div className="text-center py-16 bg-white rounded-3xl border border-[rgba(63,67,77,0.08)] p-8">
-              <Home className="h-10 w-10 text-[#6E727C] mx-auto mb-3" />
-              <h4 className="font-display font-medium text-lg text-[#3F434D] mb-1">{tGen.sinResultados}</h4>
-              <p className="text-xs text-[#6E727C] mb-4">Intenta cambiar la búsqueda o añade un nuevo alojamiento.</p>
-              <button
-                onClick={handleOpenCreateHouse}
-                className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-white hover:bg-[#888B47]"
-              >
-                + {tCas.botonNueva}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* SECCIÓN 2: HABITACIONES Y TARIFAS                                         */}
-      {/* ========================================================================= */}
-      {dashActiveTab === 'habitaciones' && (
-        <div className="space-y-6">
-          {/* Action bar with House filter */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-[rgba(63,67,77,0.08)] shadow-sm">
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-[#6E727C]" />
-                <select
-                  value={roomHouseFilter}
-                  onChange={(e) => setRoomHouseFilter(e.target.value)}
-                  className="bg-[#FBF7EC] border border-[rgba(63,67,77,0.1)] py-2 px-3 rounded-xl text-xs font-semibold text-[#3F434D] outline-none"
-                >
-                  <option value="all">{tHab.filtroTodas} ({allRoomsList.length} hab.)</option>
-                  {houses.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {h.name} ({(roomsByHouse[h.id] || []).length})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="relative flex-1 sm:w-64">
-                <input
-                  type="text"
-                  placeholder={tHab.buscarPlaceholder}
-                  value={roomSearch}
-                  onChange={(e) => setRoomSearch(e.target.value)}
-                  className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.1)] py-2 pl-9 pr-3 rounded-xl text-xs outline-none focus:border-[#3D7A95]"
-                />
-                <Search className="h-4 w-4 text-[#6E727C] absolute left-3 top-2.5" />
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleOpenCreateRoom(roomHouseFilter !== 'all' ? roomHouseFilter : undefined)}
-              className="py-2.5 px-5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-white hover:bg-[#888B47] shadow-md transition-all flex items-center gap-2 shrink-0"
-            >
-              <Plus className="h-4 w-4" />
-              {tHab.botonNueva}
-            </button>
-          </div>
-
-          {/* Rooms Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRooms.map(({ room, house }) => (
-              <div
-                key={`${house.id}-${room.id}`}
-                className="bg-white rounded-3xl overflow-hidden border border-[rgba(63,67,77,0.08)] shadow-sm hover:shadow-lg transition-all flex flex-col justify-between"
-              >
-                <div>
-                  {/* Photo & Availability badge */}
-                  <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
-                    <img
-                      src={room.images[0] || 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600'}
-                      alt={room.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-3 left-3 flex flex-col gap-1">
-                      <span className="bg-white/90 backdrop-blur-sm text-[#3D7A95] font-bold text-[9px] uppercase px-2.5 py-1 rounded-full shadow">
-                        🏡 {house.name}
-                      </span>
-                    </div>
-
-                    <div className="absolute top-3 right-3">
-                      <button
-                        onClick={() => handleToggleRoomAvailability(house.id, room.id)}
-                        className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 transition-colors ${
-                          room.available
-                            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                            : 'bg-stone-600 text-white hover:bg-stone-700'
-                        }`}
-                        title="Clic para cambiar disponibilidad"
-                      >
-                        <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
-                        {room.available ? tHab.estadoDisponible : tHab.estadoOcupada}
-                      </button>
-                    </div>
-
-                    <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[9px] font-semibold px-2 py-0.5 rounded-full">
-                      {room.images.length} {room.images.length === 1 ? 'foto' : 'fotos'}
-                    </span>
-                  </div>
-
-                  {/* Room details */}
-                  <div className="p-5">
-                    <div className="flex justify-between items-start gap-2 mb-1.5">
-                      <h4 className="font-display font-medium text-lg text-[#3F434D] leading-snug">
-                        {room.name}
-                      </h4>
-                      <div className="text-right shrink-0">
-                        <span className="font-display text-lg font-bold text-[#3F434D]">€{room.price}</span>
-                        <span className="text-[9px] text-[#6E727C] block font-semibold">/ noche</span>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-[#6E727C] line-clamp-2 leading-relaxed mb-4">
-                      {room.description}
-                    </p>
-
-                    <div className="space-y-1.5 text-xs text-[#6E727C] bg-[#FBF7EC] p-3 rounded-2xl border border-[rgba(63,67,77,0.06)]">
-                      <div className="flex items-center gap-2">
-                        <Bed className="h-3.5 w-3.5 text-[#3D7A95]" />
-                        <span className="font-medium text-[#3F434D]">{room.beds}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Eye className="h-3.5 w-3.5 text-[#A7AB5E]" />
-                        <span className="font-medium text-[#3F434D]">{room.view}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions Footer */}
-                <div className="p-4 bg-[#FBF7EC] border-t border-[rgba(63,67,77,0.06)] flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleToggleRoomAvailability(house.id, room.id)}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                        room.available ? 'bg-emerald-500' : 'bg-gray-400'
-                      }`}
-                      title="Alternar estado libre/ocupado"
-                    >
-                      <span
-                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                          room.available ? 'translate-x-4.5' : 'translate-x-0.5'
-                        }`}
-                      />
-                    </button>
-                    <span className="text-[10px] font-semibold text-[#6E727C]">
-                      {room.available ? tHab.estadoDisponible : tHab.estadoOcupada}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleOpenEditRoom(room, house.id)}
-                      className="py-1.5 px-3 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#3F434D] hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#3F434D] flex items-center gap-1 transition-all"
-                    >
-                      <Edit3 className="h-3 w-3" /> {tGen.editar}
-                    </button>
-
-                    <button
-                      onClick={() => handleTriggerDeleteRoom(room, house.id)}
-                      className="h-8 w-8 rounded-xl bg-white border border-[rgba(63,67,77,0.1)] hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors"
-                      title={tGen.eliminar}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredRooms.length === 0 && (
-            <div className="text-center py-16 bg-white rounded-3xl border border-[rgba(63,67,77,0.08)] p-8">
-              <Bed className="h-10 w-10 text-[#6E727C] mx-auto mb-3" />
-              <h4 className="font-display font-medium text-lg text-[#3F434D] mb-1">
-                {tGen.sinResultados}
-              </h4>
-              <p className="text-xs text-[#6E727C] mb-4">
-                Puedes añadir una nueva habitación asignándola a cualquiera de tus alojamientos.
-              </p>
-              <button
-                onClick={() => handleOpenCreateRoom()}
-                className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-white hover:bg-[#888B47]"
-              >
-                + {tHab.botonNueva}
-              </button>
-            </div>
-          )}
-        </div>
+      {(dashActiveTab === 'casas' || dashActiveTab === 'listings' || dashActiveTab === 'habitaciones') && (
+        <PropertiesTab 
+          tCas={tCas} tHab={tHab} tGen={tGen}
+          houseSearch={houseSearch} setHouseSearch={setHouseSearch}
+          handleOpenCreateHouse={handleOpenCreateHouse} filteredHouses={filteredHouses}
+          roomsByHouse={roomsByHouse} setRoomHouseFilter={setRoomHouseFilter}
+          setDashActiveTab={setDashActiveTab} handleNavigate={handleNavigate}
+          handleOpenEditHouse={handleOpenEditHouse} handleTriggerDeleteHouse={handleTriggerDeleteHouse}
+          roomHouseFilter={roomHouseFilter} allRoomsList={allRoomsList} houses={houses}
+          roomSearch={roomSearch} setRoomSearch={setRoomSearch}
+          handleOpenCreateRoom={handleOpenCreateRoom} filteredRooms={filteredRooms}
+          handleToggleRoomAvailability={handleToggleRoomAvailability}
+          handleOpenEditRoom={handleOpenEditRoom} handleTriggerDeleteRoom={handleTriggerDeleteRoom}
+        />
       )}
 
       {/* ========================================================================= */}
       {/* SECCIÓN 3: HISTORIAS Y GUÍAS                                              */}
       {/* ========================================================================= */}
       {(dashActiveTab === 'historias' || dashActiveTab === 'stories') && (
-        <div className="space-y-6">
-          {/* Action bar */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-[rgba(63,67,77,0.08)] shadow-sm">
-            <div className="relative w-full sm:w-72">
-              <input
-                type="text"
-                placeholder={tHis.buscarPlaceholder}
-                value={storySearch}
-                onChange={(e) => setStorySearch(e.target.value)}
-                className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.1)] py-2 pl-9 pr-3 rounded-xl text-xs outline-none focus:border-[#3D7A95]"
-              />
-              <Search className="h-4 w-4 text-[#6E727C] absolute left-3 top-2.5" />
-            </div>
-
-            <button
-              onClick={handleOpenCreateStory}
-              className="py-2.5 px-5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-white hover:bg-[#888B47] shadow-md transition-all flex items-center gap-2 shrink-0"
-            >
-              <Plus className="h-4 w-4" />
-              {tHis.botonNueva}
-            </button>
-          </div>
-
-          {/* Stories Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredStories.map((story) => (
-              <div
-                key={story.id}
-                className="bg-white rounded-3xl overflow-hidden border border-[rgba(63,67,77,0.08)] shadow-sm hover:shadow-lg transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
-                    <img src={story.image} alt={story.title} className="w-full h-full object-cover" />
-                    <span className="absolute top-3 left-3 bg-white text-[#3F434D] font-bold text-[10px] tracking-wider uppercase py-1 px-3 rounded-full shadow-md">
-                      {story.category}
-                    </span>
-                  </div>
-
-                  <div className="p-5">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1">
-                      {story.publishedDate} · {story.readTime}
-                    </div>
-                    <h3 className="font-display font-medium text-xl text-[#3F434D] mb-2 leading-snug">
-                      {story.title}
-                    </h3>
-                    <p className="text-xs text-[#6E727C] line-clamp-3 leading-relaxed mb-4">
-                      {story.excerpt}
-                    </p>
-                    <div className="text-[10px] text-[#A7AB5E] font-semibold">
-                      Por {story.author}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions Footer */}
-                <div className="p-4 bg-[#FBF7EC] border-t border-[rgba(63,67,77,0.06)] flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => handleNavigate('blog')}
-                    className="py-1.5 px-3 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#3D7A95] flex items-center gap-1 transition-colors"
-                  >
-                    <Eye className="h-3 w-3" /> {tHis.verEnBlog}
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleOpenEditStory(story)}
-                      className="py-1.5 px-3 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#3F434D] hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#3F434D] flex items-center gap-1 transition-all"
-                    >
-                      <Edit3 className="h-3 w-3" /> {tGen.editar}
-                    </button>
-
-                    <button
-                      onClick={() => handleTriggerDeleteStory(story)}
-                      className="h-8 w-8 rounded-xl bg-white border border-[rgba(63,67,77,0.1)] hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors"
-                      title={tGen.eliminar}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredStories.length === 0 && (
-            <div className="text-center py-16 bg-white rounded-3xl border border-[rgba(63,67,77,0.08)] p-8">
-              <BookOpen className="h-10 w-10 text-[#6E727C] mx-auto mb-3" />
-              <h4 className="font-display font-medium text-lg text-[#3F434D] mb-1">
-                {tGen.sinResultados}
-              </h4>
-              <p className="text-xs text-[#6E727C] mb-4">
-                Comparte rincones secretos de Gran Canaria, senderos y recomendaciones con tus huéspedes.
-              </p>
-              <button
-                onClick={handleOpenCreateStory}
-                className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-white hover:bg-[#888B47]"
-              >
-                + {tHis.botonNueva}
-              </button>
-            </div>
-          )}
-        </div>
+        <StoriesTab
+          tHis={tHis} tGen={tGen}
+          storySearch={storySearch} setStorySearch={setStorySearch}
+          handleOpenCreateStory={handleOpenCreateStory} filteredStories={filteredStories}
+          handleNavigate={handleNavigate} handleOpenEditStory={handleOpenEditStory}
+          handleTriggerDeleteStory={handleTriggerDeleteStory}
+        />
       )}
 
       {/* ========================================================================= */}
       {/* SECCIÓN 4: CONSULTAS & MENSAJES                                           */}
       {/* ========================================================================= */}
       {dashActiveTab === 'inquiries' && (
-        <div className="space-y-4 max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h3 className="font-display font-medium text-2xl text-[#3F434D]">Conversaciones con Huéspedes</h3>
-              <p className="text-xs text-[#6E727C] mt-0.5">Responde directamente a los viajeros interesados en tus alojamientos.</p>
-            </div>
-          </div>
-
-          {inquiries.length === 0 ? (
-            <div className="bg-white border border-[rgba(63,67,77,0.08)] rounded-3xl p-12 text-center">
-              <MessageSquare className="h-10 w-10 text-[#6E727C] mx-auto mb-3 opacity-60" />
-              <p className="text-sm font-medium text-[#3F434D]">No hay consultas registradas todavía.</p>
-              <p className="text-xs text-[#6E727C] mt-1">Los mensajes de viajeros aparecerán aquí.</p>
-            </div>
-          ) : (
-            <div className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl overflow-hidden flex flex-col md:flex-row h-[600px] shadow-sm">
-              <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-[rgba(63,67,77,0.08)] bg-[#FBF7EC] overflow-y-auto">
-                {inquiries.map(inq => (
-                  <div
-                    key={inq.id}
-                    onClick={() => {
-                      setActiveInquiryId(inq.id);
-                      if (!inq.read) toggleInquiryRead(inq.id);
-                    }}
-                    className={`p-4 border-b border-[rgba(63,67,77,0.04)] cursor-pointer transition-all ${
-                      activeInquiry?.id === inq.id
-                        ? 'bg-white border-l-4 border-l-[#3D7A95]'
-                        : 'hover:bg-[rgba(255,255,255,0.5)] border-l-4 border-l-transparent'
-                    } ${!inq.read ? 'bg-[#F0DDBE]' : ''}`}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#3F434D] truncate pr-2 flex items-center gap-1">
-                        {!inq.read && <div className="h-1.5 w-1.5 rounded-full bg-[#3D7A95]"></div>}
-                        {inq.guestName}
-                      </h4>
-                      <span className="text-[10px] font-semibold text-[#6E727C] whitespace-nowrap">{inq.date}</span>
-                    </div>
-                    <p className="text-sm font-medium text-[#3D7A95] truncate mb-1">{inq.subject}</p>
-                    <p className="text-xs text-[#6E727C] truncate">{inq.message}</p>
-                  </div>
-                ))}
-              </div>
-
-              {activeInquiry ? (
-                <div className="w-full md:w-2/3 flex flex-col bg-white">
-                  <div className="p-5 border-b border-[rgba(63,67,77,0.06)] bg-white sticky top-0 z-10 flex justify-between items-center">
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-[#3F434D]">{activeInquiry.subject}</h3>
-                      <p className="text-xs text-[#6E727C] mt-1">
-                        {activeInquiry.guestName} ({activeInquiry.guestEmail}) · {activeInquiry.houseName}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => toggleInquiryRead(activeInquiry.id)}
-                      className={`py-1.5 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors ${
-                        activeInquiry.read
-                          ? 'bg-[#FBF7EC] text-[#6E727C] border border-[rgba(63,67,77,0.1)]'
-                          : 'bg-[#E6BE7A] text-white'
-                      }`}
-                    >
-                      {activeInquiry.read ? 'Marcar No Leído' : 'Marcar Leído'}
-                    </button>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
-                    {activeInquiry.thread?.map(msg => (
-                      <div
-                        key={msg.id}
-                        className={`flex flex-col gap-1 ${msg.sender === 'host' ? 'items-end' : 'items-start'}`}
-                      >
-                        <span className={`text-[10px] uppercase font-bold text-[#6E727C] ${msg.sender === 'host' ? 'mr-2' : 'ml-2'}`}>
-                          {msg.sender === 'host' ? 'Tú (Mila)' : activeInquiry.guestName} • {msg.date}
-                        </span>
-                        <div
-                          className={`p-4 rounded-2xl max-w-[85%] text-sm font-light leading-relaxed ${
-                            msg.sender === 'host'
-                              ? 'bg-[#3D7A95] text-white rounded-tr-sm'
-                              : 'bg-[#F5EFE0] text-[#3F434D] rounded-tl-sm'
-                          }`}
-                        >
-                          {msg.message}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="p-4 border-t border-[rgba(63,67,77,0.08)] bg-[#FBF7EC]">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-                        placeholder="Responder al viajero..."
-                        className="flex-1 bg-white border border-[rgba(63,67,77,0.1)] rounded-full px-4 py-3 text-sm focus:outline-none focus:border-[#3D7A95] transition-colors"
-                      />
-                      <button
-                        onClick={handleSendReply}
-                        className="h-11 w-11 bg-[#A7AB5E] text-white rounded-full flex items-center justify-center hover:bg-[#888B47] transition-colors shadow-sm shrink-0"
-                      >
-                        <Send className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full md:w-2/3 flex items-center justify-center text-sm text-[#6E727C] bg-white">
-                  Selecciona una conversación para responder.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <InquiriesTab
+          inquiries={inquiries} activeInquiryId={activeInquiryId} setActiveInquiryId={setActiveInquiryId}
+          toggleInquiryRead={toggleInquiryRead} activeInquiry={activeInquiry}
+          replyText={replyText} setReplyText={setReplyText} handleSendReply={handleSendReply}
+        />
       )}
 
       {/* ========================================================================= */}
       {/* SECCIÓN 5: PERFIL DE ANFITRIONA                                           */}
       {/* ========================================================================= */}
       {dashActiveTab === 'settings' && (
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-            <div>
-              <h3 className="font-display font-medium text-xl text-[#3F434D] mb-1">
-                Automatizaciones de Reseñas
-              </h3>
-              <p className="text-xs text-[#6E727C]">
-                Configura los avisos automáticos para que los huéspedes califiquen su estancia al hacer check-out.
-              </p>
-
-              <div className="border-t border-[rgba(63,67,77,0.08)] mt-4 pt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[#3F434D]">
-                    Disparadores automáticos por email
-                  </span>
-                  <button className="h-6 w-11 inline-flex items-center rounded-full bg-[#A7AB5E] focus:outline-none">
-                    <span className="h-4 w-4 transform rounded-full bg-white translate-x-6" />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[#3F434D]">
-                    Banner visible en web tras check-out
-                  </span>
-                  <button className="h-6 w-11 inline-flex items-center rounded-full bg-[#A7AB5E] focus:outline-none">
-                    <span className="h-4 w-4 transform rounded-full bg-white translate-x-6" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-[rgba(63,67,77,0.08)] pt-6">
-              <h3 className="font-display font-medium text-xl text-[#3F434D] mb-4">
-                Biografía y Datos de Contacto de Mila
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">
-                    Nombre Público de la Anfitriona
-                  </label>
-                  <input
-                    type="text"
-                    value={hostProfile.name}
-                    onChange={(e) => {
-                      setHostProfile(prev => ({ ...prev, name: e.target.value }));
-                      setHasUnsavedChanges(true);
-                    }}
-                    className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">
-                    Título / Subtítulo
-                  </label>
-                  <input
-                    type="text"
-                    value={hostProfile.title}
-                    onChange={(e) => {
-                      setHostProfile(prev => ({ ...prev, title: e.target.value }));
-                      setHasUnsavedChanges(true);
-                    }}
-                    className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">
-                    Biografía
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={hostProfile.bio}
-                    onChange={(e) => {
-                      setHostProfile(prev => ({ ...prev, bio: e.target.value }));
-                      setHasUnsavedChanges(true);
-                    }}
-                    className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none resize-vertical"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">
-                      Teléfono
-                    </label>
-                    <input
-                      type="text"
-                      value={hostProfile.phone}
-                      onChange={(e) => {
-                        setHostProfile(prev => ({ ...prev, phone: e.target.value }));
-                        setHasUnsavedChanges(true);
-                      }}
-                      className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">
-                      Email de contacto
-                    </label>
-                    <input
-                      type="email"
-                      value={hostProfile.email}
-                      onChange={(e) => {
-                        setHostProfile(prev => ({ ...prev, email: e.target.value }));
-                        setHasUnsavedChanges(true);
-                      }}
-                      className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">
-                    Dirección Principal
-                  </label>
-                  <input
-                    type="text"
-                    value={hostProfile.address}
-                    onChange={(e) => {
-                      setHostProfile(prev => ({ ...prev, address: e.target.value }));
-                      setHasUnsavedChanges(true);
-                    }}
-                    className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-2.5 px-4 rounded-xl text-xs outline-none"
-                  />
-                </div>
-                <button
-                  onClick={handleManualSave}
-                  className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#3F434D] text-[#FBF7EC] hover:bg-[#1E2024] shadow-md transition-all"
-                >
-                  Guardar Perfil
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SettingsTab
+          hostProfile={hostProfile} setHostProfile={setHostProfile}
+          setHasUnsavedChanges={setHasUnsavedChanges} handleManualSave={handleManualSave}
+        />
       )}
 
       {/* ========================================================================= */}
