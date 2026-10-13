@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { auth } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { ADMIN_EMAILS } from '../config/admins';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  sendEmailVerification, 
+  sendPasswordResetEmail, 
+  signOut, 
+  GoogleAuthProvider, 
+  signInWithPopup 
+} from 'firebase/auth';
+import { isAdminEmail } from '../config/admins';
 
 interface LoginModalProps {
   loginModalOpen: boolean;
@@ -24,7 +32,7 @@ export function LoginModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      showToast('Please enter an email address.');
+      showToast('Por favor introduce una dirección de correo.');
       return;
     }
     
@@ -34,41 +42,40 @@ export function LoginModal({
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         if (!userCredential.user.emailVerified) {
           await sendEmailVerification(userCredential.user);
-          showToast('Please verify your email. A fresh link has been sent to your inbox.');
+          showToast('Por favor verifica tu correo. Hemos enviado un enlace de confirmación a tu bandeja de entrada.');
           await signOut(auth);
         } else {
           setLoginModalOpen(false);
-          const emailLower = userCredential.user.email?.toLowerCase();
-          if (emailLower && ADMIN_EMAILS.includes(emailLower)) {
-            showToast('Welcome back, Admin! ☀️ Open Dashboard to manage your stays.');
+          if (isAdminEmail(userCredential.user.email)) {
+            showToast('¡Bienvenida de nuevo! ☀️ Abre el panel para gestionar tus alojamientos.');
           } else {
-            showToast(`Welcome! Feel free to explore and request stays.`);
+            showToast('¡Bienvenido! Explora los alojamientos disponibles y solicita tu estancia.');
           }
         }
       } else if (mode === 'register') {
         if (password.length < 6) {
-          showToast('Password must be at least 6 characters.');
+          showToast('La contraseña debe tener al menos 6 caracteres.');
           setLoading(false);
           return;
         }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await sendEmailVerification(userCredential.user);
-        await signOut(auth); // Sign out so they have to verify first
-        showToast('Registration successful! Please check your email to verify your account.');
+        await signOut(auth);
+        showToast('¡Registro completado! Por favor revisa tu correo electrónico para verificar tu cuenta.');
         setMode('login');
       } else if (mode === 'reset') {
         await sendPasswordResetEmail(auth, email);
-        showToast('Password reset email sent! Check your inbox.');
+        showToast('¡Enlace de recuperación enviado! Revisa tu bandeja de entrada.');
         setMode('login');
       }
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        showToast('Invalid email or password.');
+        showToast('Correo electrónico o contraseña incorrectos.');
       } else if (err.code === 'auth/email-already-in-use') {
-        showToast('An account with this email already exists.');
+        showToast('Ya existe una cuenta registrada con este correo.');
       } else {
-        showToast(err.message || 'Authentication failed.');
+        showToast(err.message || 'Error en la autenticación.');
       }
     } finally {
       setLoading(false);
@@ -80,18 +87,17 @@ export function LoginModal({
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
       setLoginModalOpen(false);
-      const emailLower = userCredential.user.email?.toLowerCase();
-      if (emailLower && ADMIN_EMAILS.includes(emailLower)) {
-        showToast('Welcome back, Admin! ☀️ Open Dashboard to manage your stays.');
+      if (isAdminEmail(userCredential.user.email)) {
+        showToast('¡Bienvenida de nuevo! ☀️ Abre el panel para gestionar tus alojamientos.');
       } else {
-        showToast(`Welcome! Feel free to explore and request stays.`);
+        showToast('¡Bienvenido! Explora los alojamientos disponibles y solicita tu estancia.');
       }
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/popup-closed-by-user') {
-        console.log('Login popup closed by user.');
+        console.log('Ventana de acceso con Google cerrada por el usuario.');
       } else {
-        showToast(err.message || 'Authentication failed.');
+        showToast(err.message || 'Error en la autenticación con Google.');
       }
     }
   };
@@ -106,18 +112,8 @@ export function LoginModal({
                 Acceso a <span className="italic font-medium text-[#A7AB5E]">Mila</span>
               </h2>
               <p className="text-[#6E727C] mt-2 text-xs leading-relaxed">
-                Inicia sesión para reservar estancias o gestionar el portal de anfitriona (dueña).
+                Inicia sesión para reservar estancias o gestionar el portal de anfitriona.
               </p>
-              <div className="mt-3 p-2.5 rounded-xl bg-[#F0DDBE]/50 border border-[rgba(63,67,77,0.1)] text-[11px] text-[#3F434D] flex items-center justify-between">
-                <span>👑 <strong>Dueña / Admin:</strong> amine.saidani.101@gmail.com</span>
-                <button
-                  type="button"
-                  onClick={() => setEmail('amine.saidani.101@gmail.com')}
-                  className="text-[10px] uppercase font-bold text-[#3D7A95] hover:underline shrink-0 ml-2"
-                >
-                  Usar email
-                </button>
-              </div>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -125,8 +121,8 @@ export function LoginModal({
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email address"
-                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none"
+                  placeholder="Correo electrónico"
+                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
               </div>
@@ -135,17 +131,17 @@ export function LoginModal({
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none"
+                  placeholder="Contraseña"
+                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
               </div>
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70"
+                className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70 shadow-sm"
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
               </button>
             </form>
 
@@ -155,13 +151,13 @@ export function LoginModal({
                   <div className="w-full border-t border-[rgba(63,67,77,0.1)]"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[#FBF7EC] text-[#6E727C]">Or continue with</span>
+                  <span className="px-2 bg-[#FBF7EC] text-[#6E727C] text-xs">O continúa con</span>
                 </div>
               </div>
 
               <button 
                 onClick={handleGoogleSignIn}
-                className="mt-6 w-full bg-white border border-[rgba(63,67,77,0.1)] text-[#3F434D] py-3 rounded-full font-medium hover:bg-[rgba(0,0,0,0.02)] transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="mt-6 w-full bg-white border border-[rgba(63,67,77,0.1)] text-[#3F434D] py-3 rounded-full font-medium hover:bg-[rgba(0,0,0,0.02)] transition-colors flex items-center justify-center gap-2 shadow-sm text-sm"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -185,14 +181,14 @@ export function LoginModal({
               </button>
             </div>
 
-            <div className="mt-4 flex flex-col items-center gap-2 text-sm">
+            <div className="mt-4 flex flex-col items-center gap-2 text-xs">
               <button onClick={() => setMode('reset')} className="text-[#6E727C] hover:text-[#3F434D]">
-                Forgot password?
+                ¿Olvidaste tu contraseña?
               </button>
               <div className="text-[#6E727C]">
-                Don't have an account?{' '}
-                <button onClick={() => setMode('register')} className="text-[#A7AB5E] font-medium hover:underline">
-                  Sign up
+                ¿No tienes cuenta?{' '}
+                <button onClick={() => setMode('register')} className="text-[#A7AB5E] font-semibold hover:underline">
+                  Registrarse
                 </button>
               </div>
             </div>
@@ -203,10 +199,10 @@ export function LoginModal({
           <>
             <div className="text-center mb-6">
               <h2 className="font-display font-light text-3xl text-[#3F434D]">
-                Join <span className="italic font-medium text-[#A7AB5E]">Mila</span>
+                Únete a <span className="italic font-medium text-[#A7AB5E]">Mila</span>
               </h2>
-              <p className="text-[#6E727C] mt-2 text-sm leading-relaxed">
-                Create an account to book your next stay.
+              <p className="text-[#6E727C] mt-2 text-xs leading-relaxed">
+                Crea una cuenta para solicitar estancias y chatear con la anfitriona.
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -215,8 +211,8 @@ export function LoginModal({
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email address"
-                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none"
+                  placeholder="Correo electrónico"
+                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
               </div>
@@ -225,17 +221,17 @@ export function LoginModal({
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password (min 6 characters)"
-                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none"
+                  placeholder="Contraseña (mínimo 6 caracteres)"
+                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
               </div>
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70"
+                className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70 shadow-sm"
               >
-                {loading ? 'Signing up...' : 'Sign up'}
+                {loading ? 'Creando cuenta...' : 'Crear cuenta'}
               </button>
             </form>
 
@@ -245,13 +241,13 @@ export function LoginModal({
                   <div className="w-full border-t border-[rgba(63,67,77,0.1)]"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[#FBF7EC] text-[#6E727C]">Or continue with</span>
+                  <span className="px-2 bg-[#FBF7EC] text-[#6E727C] text-xs">O continúa con</span>
                 </div>
               </div>
 
               <button 
                 onClick={handleGoogleSignIn}
-                className="mt-6 w-full bg-white border border-[rgba(63,67,77,0.1)] text-[#3F434D] py-3 rounded-full font-medium hover:bg-[rgba(0,0,0,0.02)] transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="mt-6 w-full bg-white border border-[rgba(63,67,77,0.1)] text-[#3F434D] py-3 rounded-full font-medium hover:bg-[rgba(0,0,0,0.02)] transition-colors flex items-center justify-center gap-2 shadow-sm text-sm"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -275,10 +271,10 @@ export function LoginModal({
               </button>
             </div>
 
-            <div className="mt-4 text-center text-sm text-[#6E727C]">
-              Already have an account?{' '}
-              <button onClick={() => setMode('login')} className="text-[#A7AB5E] font-medium hover:underline">
-                Sign in
+            <div className="mt-4 text-center text-xs text-[#6E727C]">
+              ¿Ya tienes cuenta?{' '}
+              <button onClick={() => setMode('login')} className="text-[#A7AB5E] font-semibold hover:underline">
+                Iniciar sesión
               </button>
             </div>
           </>
@@ -288,10 +284,10 @@ export function LoginModal({
           <>
             <div className="text-center mb-6">
               <h2 className="font-display font-light text-2xl text-[#3F434D]">
-                Reset Password
+                Recuperar Contraseña
               </h2>
-              <p className="text-[#6E727C] mt-2 text-sm leading-relaxed">
-                Enter your email address to receive a password reset link.
+              <p className="text-[#6E727C] mt-2 text-xs leading-relaxed">
+                Introduce tu correo electrónico para recibir un enlace de restablecimiento.
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -300,22 +296,22 @@ export function LoginModal({
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email address"
-                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none"
+                  placeholder="Correo electrónico"
+                  className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
               </div>
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70"
+                className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70 shadow-sm"
               >
-                {loading ? 'Sending...' : 'Send Reset Link'}
+                {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
               </button>
             </form>
-            <div className="mt-4 text-center text-sm">
-              <button onClick={() => setMode('login')} className="text-[#6E727C] hover:text-[#3F434D] font-medium flex items-center justify-center gap-1 mx-auto">
-                Back to Sign in
+            <div className="mt-4 text-center text-xs">
+              <button onClick={() => setMode('login')} className="text-[#6E727C] hover:text-[#3F434D] font-medium">
+                Volver a Iniciar sesión
               </button>
             </div>
           </>

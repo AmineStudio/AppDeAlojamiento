@@ -19,9 +19,8 @@ service cloud.firestore {
     // NOTE: This list of admin emails must be kept in sync with src/config/admins.ts
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'mila@milanomad.es' || 
-        request.auth.token.email == 'amine.saidani.101@gmail.com' ||
-        request.auth.token.email == 'milalotiairbnb@gmail.com'
+        request.auth.token.admin == true ||
+        request.auth.token.email in ['mila@milanomad.es', 'milalotiairbnb@gmail.com', 'amine.saidani.101@gmail.com']
       );
     }
     

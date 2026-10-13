@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { auth } from '../firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
-import { ADMIN_EMAILS } from '../config/admins';
+import { ADMIN_EMAILS, isAdminEmail } from '../config/admins';
 
 interface UserInfo {
   name: string;
   email: string;
-  role: 'guest' | 'host';
+  role: 'host' | 'guest';
 }
 
 interface AuthContextType {
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         const email = firebaseUser.email || '';
         // Validamos si es Admin/Host basado en el email
-        const role = ADMIN_EMAILS.includes(email) ? 'host' : 'guest';
+        const role = isAdminEmail(email) ? 'host' : 'guest';
         setUser({
           name: firebaseUser.displayName || email.split('@')[0],
           email: email,

@@ -38,14 +38,14 @@ export function ContactView({
         
         {/* Host bio & intro */}
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">Direct Communication</span>
-          <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">Ask {hostProfile.name}</h1>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">Comunicación Directa</span>
+          <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">Contacta con {hostProfile.name}</h1>
           <p className="text-sm font-light text-[#6E727C] leading-relaxed mt-4 mb-8">
-            Have inquiries about property availability, long-term nomad relocation discounts, or the neighborhood guidelines in Las Palmas or Tafira? Drop a letter.
+            ¿Tienes dudas sobre disponibilidad, estancias largas de nómadas o detalles de los alojamientos en Gran Canaria? Escríbenos directamente.
           </p>
 
           <div className="flex gap-4 p-5 bg-[#F5EFE0] rounded-3xl border border-[rgba(63,67,77,0.06)] mb-6">
-            <div className="h-12 w-12 text-md rounded-full bg-[#A7AB5E] text-white flex items-center justify-center font-bold">
+            <div className="h-12 w-12 text-md rounded-full bg-[#A7AB5E] text-white flex items-center justify-center font-bold shrink-0">
               {hostProfile.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -65,26 +65,26 @@ export function ContactView({
 
         {/* Inquiry form block */}
         <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-8 shadow-xl">
-          <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">Send a message</h3>
-          <p className="text-xs text-[#6E727C] mb-6">We will notify {hostProfile.name} and they will get back to you shortly.</p>
+          <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">Enviar un mensaje</h3>
+          <p className="text-xs text-[#6E727C] mb-6">Notificaremos a {hostProfile.name} y te responderemos lo antes posible.</p>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Your name</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Tu nombre</label>
                 <input 
                   type="text" 
-                  placeholder="John Doe" 
+                  placeholder="Tu nombre completo" 
                   value={contactName}
                   onChange={(e) => setContactName(e.target.value)}
                   className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Your email</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Tu correo electrónico</label>
                 <input 
                   type="email" 
-                  placeholder="john@example.com" 
+                  placeholder="tu@correo.com" 
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
@@ -93,7 +93,7 @@ export function ContactView({
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Regarding Stay</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Alojamiento de interés</label>
               <select 
                 value={contactHouseId}
                 onChange={(e) => setContactHouseId(e.target.value)}
@@ -106,10 +106,10 @@ export function ContactView({
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Subject</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Asunto</label>
               <input 
                 type="text" 
-                placeholder="Question about workspace availability" 
+                placeholder="Ej. Consulta sobre disponibilidad y zona de trabajo" 
                 value={contactSubject}
                 onChange={(e) => setContactSubject(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
@@ -117,9 +117,9 @@ export function ContactView({
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Message</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Mensaje</label>
               <textarea 
-                placeholder="Tell Mila what you're looking for..." 
+                placeholder="Cuéntale a la anfitriona lo que necesitas o las fechas que tienes en mente..." 
                 value={contactMessage}
                 onChange={(e) => setContactMessage(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium min-h-[120px] resize-vertical"
@@ -128,9 +128,9 @@ export function ContactView({
 
             <button 
               onClick={handleSendInquiry}
-              className="w-full py-3.5 bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] rounded-full text-xs font-semibold uppercase tracking-widest shadow-sm hover:shadow"
+              className="w-full py-3.5 bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] rounded-full text-xs font-semibold uppercase tracking-widest shadow-sm hover:shadow transition-all"
             >
-              Send inquiry
+              Enviar consulta
             </button>
           </div>
         </div>

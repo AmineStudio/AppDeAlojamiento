@@ -54,7 +54,7 @@
       "titulo": "Acceso Reservado para la Anfitriona",
       "descripcion": "Solo la dueña de Mila Nomad tiene acceso para gestionar alojamientos, habitaciones y responder solicitudes.",
       "botonIniciar": "Entrar como anfitriona",
-      "cuentasHabilitadas": "Cuentas autorizadas: amine.saidani.101@gmail.com / mila@milanomad.es"
+      "cuentasHabilitadas": "Acceso restringido a cuentas autorizadas de anfitriona."
     }
   },
   "casas": {

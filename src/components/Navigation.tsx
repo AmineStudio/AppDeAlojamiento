@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, TrendingUp, Compass, Star, LogOut } from 'lucide-react';
+import { Menu, X, TrendingUp, Star, LogOut, MessageSquare } from 'lucide-react';
 import { MilaLogo } from './MilaLogo';
 
 interface NavigationProps {
@@ -24,8 +24,7 @@ export function Navigation({
   setMobileMenuOpen,
   handleNavigate,
   triggerLoginModal,
-  executeSignOut,
-  showToast
+  executeSignOut
 }: NavigationProps) {
   return (
     <nav className="sticky top-0 z-40 bg-[rgba(250,246,236,0.92)] backdrop-blur-xl border-b border-[rgba(63,67,77,0.1)]">
@@ -47,26 +46,26 @@ export function Navigation({
               onClick={() => handleNavigate('home')} 
               className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${currentPage === 'home' || currentPage === 'detail' ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
-              Stays
+              Alojamientos
             </button>
             <button 
               onClick={() => handleNavigate('blog')} 
               className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${currentPage === 'blog' ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
-              Stories
+              Historias
             </button>
             <button 
               onClick={() => handleNavigate('contact')} 
               className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${currentPage === 'contact' ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
-              Contact
+              Contacto
             </button>
             {user && user.role === 'host' ? (
               <button 
                 onClick={() => handleNavigate('dashboard')} 
                 className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${currentPage === 'dashboard' ? 'bg-[#A7AB5E] text-white shadow-md' : 'text-[#A7AB5E] font-bold hover:bg-[#F5EFE0]'}`}
               >
-                <span>👑</span> Admin Dashboard
+                <span>👑</span> Panel de Anfitriona
               </button>
             ) : (
               <button 
@@ -74,7 +73,7 @@ export function Navigation({
                 className="py-2 px-4 rounded-full text-[11px] font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] transition-all"
                 title="Acceso para la dueña / administradora"
               >
-                Admin
+                Anfitriona
               </button>
             )}
           </div>
@@ -85,10 +84,10 @@ export function Navigation({
               {!user ? (
                 <>
                   <button onClick={() => triggerLoginModal('signin')} className="text-xs font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] py-2 px-4 transition-colors">
-                    Sign in
+                    Iniciar sesión
                   </button>
                   <button onClick={() => triggerLoginModal('signup')} className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] shadow-sm hover:shadow transition-all duration-200">
-                    Join Stays
+                    Registrarse
                   </button>
                 </>
               ) : (
@@ -98,35 +97,35 @@ export function Navigation({
                     className="flex items-center gap-2.5 bg-[#F5EFE0] p-1.5 pr-4 rounded-full border border-[rgba(63,67,77,0.1)] cursor-pointer hover:border-[#3D7A95] transition-all"
                   >
                     <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#A7AB5E] to-[#E6BE7A] text-white flex items-center justify-center font-bold text-sm">
-                      {user.name.charAt(0)}
+                      {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs font-semibold leading-3 text-[#3F434D]">{user.name}</span>
-                      <span className="text-[9px] uppercase tracking-wider font-bold text-[#3D7A95]">{user.role}</span>
+                      <span className="text-[9px] uppercase tracking-wider font-bold text-[#3D7A95]">
+                        {user.role === 'host' ? 'Anfitriona' : 'Huésped'}
+                      </span>
                     </div>
                   </div>
 
                   {userDropdownOpen && (
                     <div className="absolute right-0 top-14 w-52 bg-[#FBF7EC] border border-[rgba(63,67,77,0.1)] rounded-2xl shadow-xl py-2 z-50 text-sm overflow-hidden">
                       {user.role === 'host' ? (
-                        <>
-                          <button onClick={() => handleNavigate('dashboard')} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                            <TrendingUp className="h-4 w-4 text-[#3D7A95]" /> Host Panel
-                          </button>
-                        </>
+                        <button onClick={() => { handleNavigate('dashboard'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
+                          <TrendingUp className="h-4 w-4 text-[#3D7A95]" /> Panel de Gestión
+                        </button>
                       ) : (
                         <>
-                          <button onClick={() => handleNavigate('inbox')} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                            <Menu className="h-4 w-4 text-[#3D7A95]" /> Messages
+                          <button onClick={() => { handleNavigate('inbox'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
+                            <MessageSquare className="h-4 w-4 text-[#3D7A95]" /> Mis Mensajes
                           </button>
-                          <button onClick={() => handleNavigate('detail')} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                            <Star className="h-4 w-4 text-[#A7AB5E]" /> Post Reviews
+                          <button onClick={() => { handleNavigate('detail'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
+                            <Star className="h-4 w-4 text-[#A7AB5E]" /> Escribir Reseña
                           </button>
                         </>
                       )}
                       <div className="border-t border-[rgba(63,67,77,0.06)] my-1.5"></div>
                       <button onClick={executeSignOut} className="w-full text-left py-2.5 px-5 hover:bg-orange-50 text-[#888B47] flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
-                        <LogOut className="h-4 w-4" /> Sign out
+                        <LogOut className="h-4 w-4" /> Cerrar sesión
                       </button>
                     </div>
                   )}
@@ -155,33 +154,33 @@ export function Navigation({
               onClick={() => { handleNavigate('home'); setMobileMenuOpen(false); }} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
-              Stays
+              Alojamientos
             </button>
             <button 
               onClick={() => { handleNavigate('blog'); setMobileMenuOpen(false); }} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
-              Stories
+              Historias
             </button>
             <button 
               onClick={() => { handleNavigate('contact'); setMobileMenuOpen(false); }} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
-              Contact
+              Contacto
             </button>
             {user && user.role === 'host' ? (
               <button 
                 onClick={() => { handleNavigate('dashboard'); setMobileMenuOpen(false); }} 
                 className="text-left text-sm font-bold uppercase tracking-wider text-[#A7AB5E] flex items-center gap-1.5"
               >
-                <span>👑</span> Admin Dashboard
+                <span>👑</span> Panel de Anfitriona
               </button>
             ) : (
               <button 
                 onClick={() => { handleNavigate('dashboard'); setMobileMenuOpen(false); }} 
                 className="text-left text-sm font-semibold uppercase tracking-wider text-[#6E727C]"
               >
-                Acceso Dueña (Admin)
+                Acceso Anfitriona
               </button>
             )}
             
@@ -190,40 +189,42 @@ export function Navigation({
             {!user ? (
               <>
                 <button onClick={() => { triggerLoginModal('signin'); setMobileMenuOpen(false); }} className="text-left text-sm font-semibold uppercase tracking-wider text-[#6E727C]">
-                  Sign in
+                  Iniciar sesión
                 </button>
                 <button onClick={() => { triggerLoginModal('signup'); setMobileMenuOpen(false); }} className="text-left text-sm font-semibold uppercase tracking-wider text-[#A7AB5E]">
-                  Join Stays
+                  Registrarse
                 </button>
               </>
             ) : (
               <>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-[#A7AB5E] to-[#E6BE7A] text-white flex items-center justify-center font-bold text-lg">
-                    {user.name.charAt(0)}
+                    {user.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-[#3F434D]">{user.name}</span>
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#3D7A95]">{user.role}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#3D7A95]">
+                      {user.role === 'host' ? 'Anfitriona' : 'Huésped'}
+                    </span>
                   </div>
                 </div>
                 
                 {user.role === 'host' ? (
                   <button onClick={() => { handleNavigate('dashboard'); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#3D7A95]">
-                    <TrendingUp className="h-4 w-4" /> Host Panel
+                    <TrendingUp className="h-4 w-4" /> Panel de Gestión
                   </button>
                 ) : (
                   <>
                     <button onClick={() => { handleNavigate('inbox'); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#3D7A95]">
-                      <Menu className="h-4 w-4" /> Messages
+                      <MessageSquare className="h-4 w-4" /> Mis Mensajes
                     </button>
                     <button onClick={() => { handleNavigate('detail'); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#A7AB5E]">
-                      <Star className="h-4 w-4" /> Post Reviews
+                      <Star className="h-4 w-4" /> Escribir Reseña
                     </button>
                   </>
                 )}
                 <button onClick={() => { executeSignOut(); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#888B47] mt-2">
-                  <LogOut className="h-4 w-4" /> Sign out
+                  <LogOut className="h-4 w-4" /> Cerrar sesión
                 </button>
               </>
             )}

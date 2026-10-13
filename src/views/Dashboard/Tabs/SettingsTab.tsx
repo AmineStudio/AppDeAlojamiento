@@ -44,7 +44,7 @@ export function SettingsTab({
 
         <div className="border-t border-[rgba(63,67,77,0.08)] pt-6">
           <h3 className="font-display font-medium text-xl text-[#3F434D] mb-4">
-            Biografía y Datos de Contacto de Mila
+            Biografía y Datos de Contacto de la Anfitriona
           </h3>
           <div className="space-y-4">
             <div>

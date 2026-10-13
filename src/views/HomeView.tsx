@@ -9,7 +9,11 @@ interface HomeViewProps {
   showToast: (msg: string) => void;
 }
 
-export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }: HomeViewProps) {
+export function HomeView({ houses, handleNavigate, handleHouseClick }: HomeViewProps) {
+  const avgRating = houses.length > 0
+    ? (houses.reduce((acc, h) => acc + (h.rating || 0), 0) / houses.length).toFixed(2)
+    : '5.00';
+
   return (
     <div className="animate-fade-in">
       {/* Hero display block */}
@@ -20,24 +24,24 @@ export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }
         <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
           <span className="inline-flex items-center gap-2 bg-white px-4 py-2 border border-[rgba(63,67,77,0.1)] rounded-full text-xs font-semibold uppercase tracking-widest text-[#3F434D] mb-6">
             <span className="h-2 w-2 rounded-full bg-[#A7AB5E] animate-ping"></span>
-            Gran Canaria shared nomad stays
+            Estancias compartidas para nómadas y estudiantes
           </span>
           
           <h1 className="font-display font-light text-5xl sm:text-7xl lg:text-8xl tracking-tight text-[#3F434D] leading-tight mb-8">
-            Live where the <br />
-            <span className="italic font-medium text-[#A7AB5E] underline decoration-wavy decoration-[#E6BE7A] underline-offset-8">Atlantic</span> inspires.
+            Vive donde el <br />
+            <span className="italic font-medium text-[#A7AB5E] underline decoration-wavy decoration-[#E6BE7A] underline-offset-8">Atlántico</span> te inspira.
           </h1>
 
           <p className="text-[#6E727C] text-lg sm:text-xl font-light leading-relaxed max-w-xl mb-10">
-            Boutique shared homes nestled in vibrant Calle León y Castillo, Las Palmas, and serene island settings across Gran Canaria.
+            Alojamientos compartidos boutique en el corazón de Las Palmas y rincones tranquilos de Gran Canaria. Conexión de fibra de alta velocidad y comunidad internacional.
           </p>
 
           <div className="flex gap-4 flex-wrap justify-center mb-16">
             <a href="#stays" className="py-3 px-8 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] shadow-xl hover:shadow-2xl transition-all duration-300">
-              Explore Stays
+              Ver Alojamientos
             </a>
             <button onClick={() => handleNavigate('blog')} className="py-3 px-8 rounded-full text-xs font-semibold uppercase tracking-wider bg-white text-[#3F434D] border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] transition-all duration-300">
-              Read local travel logs
+              Leer Historias Locales
             </button>
           </div>
 
@@ -45,15 +49,15 @@ export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }
           <div className="grid grid-cols-3 gap-8 sm:gap-16 border-t border-[rgba(63,67,77,0.08)] pt-12 w-full max-w-2xl">
             <div>
               <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#3D7A95] tracking-tight">{houses.length}</h5>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Shared Homes</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Alojamientos</p>
             </div>
             <div>
-              <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#A7AB5E] tracking-tight">4.92</h5>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Average Rating</p>
+              <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#A7AB5E] tracking-tight">{avgRating}</h5>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Valoración Media</p>
             </div>
             <div>
               <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#3F434D] tracking-tight">100%</h5>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Island Crafted</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Esencia Canaria</p>
             </div>
           </div>
         </div>
@@ -72,10 +76,10 @@ export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12 border-b border-[rgba(63,67,77,0.06)] pb-8">
             <div>
               <h2 className="font-display text-3xl sm:text-5xl font-light text-[#3F434D] tracking-tight">
-                Mila’s <span className="italic font-normal text-[#A7AB5E]">Shared Houses</span>
+                Alojamientos de <span className="italic font-normal text-[#A7AB5E]">Mila</span>
               </h2>
               <p className="text-sm text-[#6E727C] mt-2 max-w-md font-light">
-                Two destinations with a relaxed, shared living experience. Beautifully restored to connect and live comfortably.
+                {houses.length} {houses.length === 1 ? 'alojamiento' : 'alojamientos'} con un ambiente relajado y compartido. Cuidadosamente restaurados para convivir con comodidad y bienestar.
               </p>
             </div>
           </div>
@@ -90,7 +94,7 @@ export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-200">
                   <img 
-                    src={h.images[0]} 
+                    src={h.images[0] || 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800'} 
                     alt={h.name} 
                     className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                   />
@@ -114,8 +118,8 @@ export function HomeView({ houses, handleNavigate, handleHouseClick, showToast }
 
                   <div className="border-t border-[rgba(63,67,77,0.06)] pt-4 flex items-center justify-between">
                     <div className="flex items-baseline gap-1">
-                      <span className="font-display text-xl font-bold text-[#3F434D]">€{h.pricePerNight}</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E727C]">/ night</span>
+                      <span className="font-display text-xl font-bold text-[#3F434D]">{h.pricePerNight}€</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E727C]">/ noche</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-[#3F434D]">

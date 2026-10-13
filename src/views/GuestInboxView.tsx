@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, User, MessageSquare } from 'lucide-react';
+import { Send, MessageSquare } from 'lucide-react';
 import { MessageInquiry } from '../types';
 
 interface GuestInboxViewProps {
@@ -12,9 +12,8 @@ export function GuestInboxView({ user, inquiries, handleReplyInquiry }: GuestInb
   const [activeInquiryId, setActiveInquiryId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
 
-  // Filter inquiries belonging to the current guest
+  // Filtrar consultas del huésped actual
   const myInquiries = inquiries.filter(inq => inq.guestEmail.toLowerCase() === user.email.toLowerCase());
-  
   const activeInquiry = myInquiries.find(inq => inq.id === activeInquiryId) || myInquiries[0];
 
   const handleSendReply = () => {
@@ -28,19 +27,19 @@ export function GuestInboxView({ user, inquiries, handleReplyInquiry }: GuestInb
     <div className="animate-fade-in py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="font-display font-light text-3xl sm:text-4xl text-[#3F434D] tracking-tight">My Messages</h1>
-          <p className="text-sm font-medium text-[#6E727C] mt-2">Manage your conversations with Mila</p>
+          <h1 className="font-display font-light text-3xl sm:text-4xl text-[#3F434D] tracking-tight">Mis Mensajes</h1>
+          <p className="text-sm font-medium text-[#6E727C] mt-2">Gestiona tus conversaciones con la anfitriona</p>
         </div>
 
         {myInquiries.length === 0 ? (
           <div className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl p-12 text-center">
             <MessageSquare className="h-12 w-12 text-[#CFE4EC] mx-auto mb-4" />
-            <h3 className="font-display text-2xl text-[#3F434D] mb-2">No messages yet</h3>
-            <p className="text-sm text-[#6E727C]">When you send inquiries or contact Mila, they will appear here.</p>
+            <h3 className="font-display text-2xl text-[#3F434D] mb-2">Aún no tienes mensajes</h3>
+            <p className="text-sm text-[#6E727C]">Cuando envíes consultas o contactes con la anfitriona, aparecerán aquí.</p>
           </div>
         ) : (
           <div className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl overflow-hidden flex flex-col md:flex-row h-[600px] shadow-sm">
-            {/* Thread List Sidebar */}
+            {/* Lista lateral de conversaciones */}
             <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-[rgba(63,67,77,0.08)] bg-[#FBF7EC] overflow-y-auto">
               {myInquiries.map(inq => (
                 <div 
@@ -58,7 +57,7 @@ export function GuestInboxView({ user, inquiries, handleReplyInquiry }: GuestInb
               ))}
             </div>
 
-            {/* Thread Chat Area */}
+            {/* Área de chat */}
             {activeInquiry ? (
               <div className="w-full md:w-2/3 flex flex-col bg-white">
                 <div className="p-5 border-b border-[rgba(63,67,77,0.06)] bg-white sticky top-0 z-10">
@@ -67,11 +66,10 @@ export function GuestInboxView({ user, inquiries, handleReplyInquiry }: GuestInb
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
-                  {/* Thread messages */}
                   {activeInquiry.thread?.map(msg => (
                     <div key={msg.id} className={`flex flex-col gap-1 ${msg.sender === 'guest' ? 'items-end' : 'items-start'}`}>
                       <span className={`text-[10px] uppercase font-bold text-[#6E727C] ${msg.sender === 'guest' ? 'mr-2' : 'ml-2'}`}>
-                        {msg.sender === 'guest' ? 'You' : 'Mila'} • {msg.date}
+                        {msg.sender === 'guest' ? 'Tú' : 'Mila'} • {msg.date}
                       </span>
                       <div className={`p-4 rounded-2xl max-w-[85%] text-sm font-light leading-relaxed ${msg.sender === 'guest' ? 'bg-[#3D7A95] text-white rounded-tr-sm' : 'bg-[#F5EFE0] text-[#3F434D] rounded-tl-sm'}`}>
                         {msg.message}
@@ -87,12 +85,13 @@ export function GuestInboxView({ user, inquiries, handleReplyInquiry }: GuestInb
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-                      placeholder="Write a message to Mila..."
+                      placeholder="Escribe un mensaje para responder..."
                       className="flex-1 bg-white border border-[rgba(63,67,77,0.1)] rounded-full px-4 py-3 text-sm focus:outline-none focus:border-[#3D7A95] transition-colors"
                     />
                     <button 
                       onClick={handleSendReply}
                       className="h-11 w-11 bg-[#A7AB5E] text-white rounded-full flex items-center justify-center hover:bg-[#888B47] transition-colors shadow-sm"
+                      title="Enviar mensaje"
                     >
                       <Send className="h-4 w-4" />
                     </button>
@@ -101,7 +100,7 @@ export function GuestInboxView({ user, inquiries, handleReplyInquiry }: GuestInb
               </div>
             ) : (
               <div className="w-full md:w-2/3 flex items-center justify-center text-sm text-[#6E727C] bg-white">
-                Select a conversation to view
+                Selecciona una conversación para ver los detalles
               </div>
             )}
           </div>
