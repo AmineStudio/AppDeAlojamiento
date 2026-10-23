@@ -1,38 +1,92 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, TrendingUp, Star, LogOut, MessageSquare } from 'lucide-react';
 import { MilaLogo } from './MilaLogo';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface NavigationProps {
-  currentPage: string;
-  user: { name: string; email: string; role: 'guest' | 'host' } | null;
-  userDropdownOpen: boolean;
-  setUserDropdownOpen: (open: boolean) => void;
-  mobileMenuOpen: boolean;
-  setMobileMenuOpen: (open: boolean) => void;
-  handleNavigate: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard' | 'inbox') => void;
-  triggerLoginModal: (tab: 'signin' | 'signup') => void;
-  executeSignOut: () => void;
-  showToast: (msg: string) => void;
+  currentPage?: string;
+  user?: { name: string; email: string; role: 'guest' | 'host' } | null;
+  userDropdownOpen?: boolean;
+  setUserDropdownOpen?: (open: boolean) => void;
+  mobileMenuOpen?: boolean;
+  setMobileMenuOpen?: (open: boolean) => void;
+  handleNavigate?: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard' | 'inbox') => void;
+  triggerLoginModal?: (tab: 'signin' | 'signup') => void;
+  executeSignOut?: () => void;
+  showToast?: (msg: string) => void;
 }
 
-export function Navigation({
-  currentPage,
-  user,
-  userDropdownOpen,
-  setUserDropdownOpen,
-  mobileMenuOpen,
-  setMobileMenuOpen,
-  handleNavigate,
-  triggerLoginModal,
-  executeSignOut
-}: NavigationProps) {
+export function Navigation(props: NavigationProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user: ctxUser, triggerLoginModal: ctxTriggerLoginModal, logout } = useAuth();
+  const { showToast: ctxShowToast } = useToast();
+
+  const user = props.user !== undefined ? props.user : ctxUser;
+  const triggerLoginModal = props.triggerLoginModal || ctxTriggerLoginModal;
+  const showToast = props.showToast || ctxShowToast;
+
+  const [localDropdown, setLocalDropdown] = useState(false);
+  const userDropdownOpen = props.userDropdownOpen !== undefined ? props.userDropdownOpen : localDropdown;
+  const setUserDropdownOpen = props.setUserDropdownOpen || setLocalDropdown;
+
+  const [localMobile, setLocalMobile] = useState(false);
+  const mobileMenuOpen = props.mobileMenuOpen !== undefined ? props.mobileMenuOpen : localMobile;
+  const setMobileMenuOpen = props.setMobileMenuOpen || setLocalMobile;
+
+  const executeSignOut = props.executeSignOut || (async () => {
+    try {
+      await logout();
+      setUserDropdownOpen(false);
+      navigate('/');
+      showToast('Sesión cerrada correctamente.');
+    } catch (err: any) {
+      showToast(err.message || 'Error al cerrar sesión.');
+    }
+  });
+
+  const onNav = (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard' | 'inbox') => {
+    if (page === 'dashboard') {
+      if (!user || user.role !== 'host') {
+        showToast('🔒 Inicia sesión con la cuenta de anfitriona para acceder al panel.');
+        triggerLoginModal('signin');
+        return;
+      }
+      navigate('/panel');
+    } else if (page === 'home') {
+      navigate('/');
+    } else if (page === 'blog') {
+      navigate('/historias');
+    } else if (page === 'contact') {
+      navigate('/contacto');
+    } else if (page === 'inbox') {
+      navigate('/mensajes');
+    } else if (page === 'detail') {
+      navigate('/');
+    }
+    
+    if (props.handleNavigate) {
+      props.handleNavigate(page);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setUserDropdownOpen(false);
+    setMobileMenuOpen(false);
+  };
+
+  const isHomeActive = location.pathname === '/' || location.pathname.startsWith('/alojamiento');
+  const isBlogActive = location.pathname.startsWith('/historias');
+  const isContactActive = location.pathname.startsWith('/contacto');
+  const isDashboardActive = location.pathname.startsWith('/panel');
+
   return (
     <nav className="sticky top-0 z-40 bg-[rgba(250,246,236,0.92)] backdrop-blur-xl border-b border-[rgba(63,67,77,0.1)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
           {/* Logo area */}
-          <div className="flex items-center gap-3.5 cursor-pointer group" onClick={() => handleNavigate('home')}>
+          <div className="flex items-center gap-3.5 cursor-pointer group" onClick={() => onNav('home')}>
             <MilaLogo className="h-11 w-auto transform transition-all duration-300 group-hover:scale-105" />
             <div className="flex flex-col">
               <span className="font-display font-medium text-lg leading-4 tracking-wider uppercase text-[#3F434D]">M.I.L.A</span>
@@ -43,33 +97,33 @@ export function Navigation({
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-1 bg-[#F5EFE0] p-1.5 rounded-full border border-[rgba(63,67,77,0.06)] shadow-inner">
             <button 
-              onClick={() => handleNavigate('home')} 
-              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${currentPage === 'home' || currentPage === 'detail' ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
+              onClick={() => onNav('home')} 
+              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isHomeActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
               Alojamientos
             </button>
             <button 
-              onClick={() => handleNavigate('blog')} 
-              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${currentPage === 'blog' ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
+              onClick={() => onNav('blog')} 
+              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isBlogActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
               Historias
             </button>
             <button 
-              onClick={() => handleNavigate('contact')} 
-              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${currentPage === 'contact' ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
+              onClick={() => onNav('contact')} 
+              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isContactActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
               Contacto
             </button>
             {user && user.role === 'host' ? (
               <button 
-                onClick={() => handleNavigate('dashboard')} 
-                className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${currentPage === 'dashboard' ? 'bg-[#A7AB5E] text-white shadow-md' : 'text-[#A7AB5E] font-bold hover:bg-[#F5EFE0]'}`}
+                onClick={() => onNav('dashboard')} 
+                className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${isDashboardActive ? 'bg-[#A7AB5E] text-white shadow-md' : 'text-[#A7AB5E] font-bold hover:bg-[#F5EFE0]'}`}
               >
                 <span>👑</span> Panel de Anfitriona
               </button>
             ) : (
               <button 
-                onClick={() => handleNavigate('dashboard')} 
+                onClick={() => onNav('dashboard')} 
                 className="py-2 px-4 rounded-full text-[11px] font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] transition-all"
                 title="Acceso para la dueña / administradora"
               >
@@ -110,15 +164,15 @@ export function Navigation({
                   {userDropdownOpen && (
                     <div className="absolute right-0 top-14 w-52 bg-[#FBF7EC] border border-[rgba(63,67,77,0.1)] rounded-2xl shadow-xl py-2 z-50 text-sm overflow-hidden">
                       {user.role === 'host' ? (
-                        <button onClick={() => { handleNavigate('dashboard'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
+                        <button onClick={() => { onNav('dashboard'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
                           <TrendingUp className="h-4 w-4 text-[#3D7A95]" /> Panel de Gestión
                         </button>
                       ) : (
                         <>
-                          <button onClick={() => { handleNavigate('inbox'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
+                          <button onClick={() => { onNav('inbox'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
                             <MessageSquare className="h-4 w-4 text-[#3D7A95]" /> Mis Mensajes
                           </button>
-                          <button onClick={() => { handleNavigate('detail'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
+                          <button onClick={() => { onNav('home'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
                             <Star className="h-4 w-4 text-[#A7AB5E]" /> Escribir Reseña
                           </button>
                         </>
@@ -151,33 +205,33 @@ export function Navigation({
         <div className="md:hidden bg-[#FBF7EC] border-b border-[rgba(63,67,77,0.1)] py-4 px-4 sm:px-6 shadow-lg">
           <div className="flex flex-col gap-4">
             <button 
-              onClick={() => { handleNavigate('home'); setMobileMenuOpen(false); }} 
+              onClick={() => onNav('home')} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
               Alojamientos
             </button>
             <button 
-              onClick={() => { handleNavigate('blog'); setMobileMenuOpen(false); }} 
+              onClick={() => onNav('blog')} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
               Historias
             </button>
             <button 
-              onClick={() => { handleNavigate('contact'); setMobileMenuOpen(false); }} 
+              onClick={() => onNav('contact')} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
               Contacto
             </button>
             {user && user.role === 'host' ? (
               <button 
-                onClick={() => { handleNavigate('dashboard'); setMobileMenuOpen(false); }} 
+                onClick={() => onNav('dashboard')} 
                 className="text-left text-sm font-bold uppercase tracking-wider text-[#A7AB5E] flex items-center gap-1.5"
               >
                 <span>👑</span> Panel de Anfitriona
               </button>
             ) : (
               <button 
-                onClick={() => { handleNavigate('dashboard'); setMobileMenuOpen(false); }} 
+                onClick={() => onNav('dashboard')} 
                 className="text-left text-sm font-semibold uppercase tracking-wider text-[#6E727C]"
               >
                 Acceso Anfitriona
@@ -210,20 +264,20 @@ export function Navigation({
                 </div>
                 
                 {user.role === 'host' ? (
-                  <button onClick={() => { handleNavigate('dashboard'); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#3D7A95]">
+                  <button onClick={() => onNav('dashboard')} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#3D7A95]">
                     <TrendingUp className="h-4 w-4" /> Panel de Gestión
                   </button>
                 ) : (
                   <>
-                    <button onClick={() => { handleNavigate('inbox'); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#3D7A95]">
+                    <button onClick={() => onNav('inbox')} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#3D7A95]">
                       <MessageSquare className="h-4 w-4" /> Mis Mensajes
                     </button>
-                    <button onClick={() => { handleNavigate('detail'); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#A7AB5E]">
+                    <button onClick={() => onNav('home')} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#A7AB5E]">
                       <Star className="h-4 w-4" /> Escribir Reseña
                     </button>
                   </>
                 )}
-                <button onClick={() => { executeSignOut(); setMobileMenuOpen(false); }} className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#888B47] mt-2">
+                <button onClick={executeSignOut} className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#888B47] mt-2">
                   <LogOut className="h-4 w-4" /> Cerrar sesión
                 </button>
               </>

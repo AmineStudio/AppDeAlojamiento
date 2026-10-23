@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { BlogPost } from '../types';
 import { ArrowLeft } from 'lucide-react';
+import { useData } from '../contexts/DataContext';
 
 interface BlogViewProps {
-  blogPosts: BlogPost[];
+  blogPosts?: BlogPost[];
 }
 
-export function BlogView({ blogPosts }: BlogViewProps) {
+export function BlogView(props: BlogViewProps) {
+  const { blogPosts: ctxBlogPosts } = useData();
+  const blogPosts = props.blogPosts || ctxBlogPosts;
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const selectedPost = blogPosts.find(p => p.id === selectedPostId);

@@ -22,33 +22,21 @@ Mila is a stay and property management platform built with modern web technologi
 
 ## Tech Stack
 
-*   **Frontend:** React 18, TypeScript, Vite
-*   **Styling:** Tailwind CSS, Lucide React (Icons)
+*   **Frontend:** React 19, TypeScript, Vite 6, React Router DOM
+*   **Styling & Motion:** Tailwind CSS 4, Motion (Framer Motion), Lucide React
+*   **Testing:** Vitest
+*   **CI/CD:** GitHub Actions
 *   **Backend & Services (Firebase):** 
     *   Authentication (Email/Password, Google OAuth)
-    *   Firestore (NoSQL Database)
-    *   Hosting (if applicable)
+    *   Firestore (NoSQL Database with granular security rules)
+    *   Hosting & Cloud Functions
 
-## Recent Updates
+## Available Scripts
 
-*   **Authentication Enhancements:** Added support for both Google Sign-In and Email/Password registration/login workflows. Included email verification requirements and password reset functionality.
-*   **Dynamic Host Profile:** The host's contact information (name, title, bio, phone, email, address) is now fully dynamic and editable directly from the Host Dashboard, updating the Contact page in real-time.
-*   **Admin Access:** Granted predefined admin emails full administrative access to the host dashboard.
-*   **Dashboard Editing Capabilities:** Enhanced the host dashboard to allow editing of house descriptions, amenities, room details, and pricing.
-
-## Setup Instructions
-
-1.  **Clone the repository**
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Environment Variables:**
-    Ensure you have your Firebase configuration set up in your environment. You will need to create a project in the Firebase Console and enable Authentication (Email/Password & Google) and Firestore.
-4.  **Run the development server:**
-    ```bash
-    npm run dev
-    ```
+*   `npm run dev`: Inicia el servidor de desarrollo en local.
+*   `npm run build`: Compila el bundle optimizado para producción con code-splitting.
+*   `npm run lint`: Ejecuta la verificación estricta de tipos de TypeScript.
+*   `npm test`: Ejecuta los tests unitarios automatizados con Vitest.
 
 ## Project Structure
 

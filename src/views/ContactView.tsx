@@ -1,37 +1,89 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { House, HostProfile } from '../types';
+import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface ContactViewProps {
-  houses: House[];
-  hostProfile: HostProfile;
-  contactName: string;
-  setContactName: (name: string) => void;
-  contactEmail: string;
-  setContactEmail: (email: string) => void;
-  contactHouseId: string;
-  setContactHouseId: (id: string) => void;
-  contactSubject: string;
-  setContactSubject: (subject: string) => void;
-  contactMessage: string;
-  setContactMessage: (message: string) => void;
-  handleSendInquiry: () => void;
+  houses?: House[];
+  hostProfile?: HostProfile;
+  contactName?: string;
+  setContactName?: (name: string) => void;
+  contactEmail?: string;
+  setContactEmail?: (email: string) => void;
+  contactHouseId?: string;
+  setContactHouseId?: (id: string) => void;
+  contactSubject?: string;
+  setContactSubject?: (subject: string) => void;
+  contactMessage?: string;
+  setContactMessage?: (message: string) => void;
+  handleSendInquiry?: () => void;
 }
 
-export function ContactView({
-  houses,
-  hostProfile,
-  contactName,
-  setContactName,
-  contactEmail,
-  setContactEmail,
-  contactHouseId,
-  setContactHouseId,
-  contactSubject,
-  setContactSubject,
-  contactMessage,
-  setContactMessage,
-  handleSendInquiry
-}: ContactViewProps) {
+export function ContactView(props: ContactViewProps) {
+  const { houses: ctxHouses, hostProfile: ctxHostProfile, sendInquiry } = useData();
+  const { user, triggerLoginModal } = useAuth();
+  const { showToast } = useToast();
+
+  const houses = props.houses || ctxHouses;
+  const hostProfile = props.hostProfile || ctxHostProfile;
+
+  const [localName, setLocalName] = useState(user ? user.name : '');
+  const [localEmail, setLocalEmail] = useState(user ? user.email : '');
+  const [localHouseId, setLocalHouseId] = useState(houses[0]?.id || '');
+  const [localSubject, setLocalSubject] = useState('');
+  const [localMessage, setLocalMessage] = useState('');
+
+  useEffect(() => {
+    if (!localHouseId && houses.length > 0) {
+      setLocalHouseId(houses[0].id);
+    }
+  }, [houses, localHouseId]);
+
+  const name = props.contactName !== undefined ? props.contactName : localName;
+  const setName = props.setContactName || setLocalName;
+  const email = props.contactEmail !== undefined ? props.contactEmail : localEmail;
+  const setEmail = props.setContactEmail || setLocalEmail;
+  const houseId = props.contactHouseId !== undefined ? props.contactHouseId : localHouseId;
+  const setHouseId = props.setContactHouseId || setLocalHouseId;
+  const subject = props.contactSubject !== undefined ? props.contactSubject : localSubject;
+  const setSubject = props.setContactSubject || setLocalSubject;
+  const message = props.contactMessage !== undefined ? props.contactMessage : localMessage;
+  const setMessage = props.setContactMessage || setLocalMessage;
+
+  const handleSubmit = props.handleSendInquiry || (async () => {
+    const finalEmail = email.trim() || (user ? user.email : '');
+    const finalName = name.trim() || (user ? user.name : '');
+
+    if (!finalEmail || !finalName || !message.trim()) {
+      showToast('Por favor completa tu nombre, correo y mensaje.');
+      return;
+    }
+
+    if (!user) {
+      showToast('Debes iniciar sesión para enviar una consulta.');
+      triggerLoginModal('signin');
+      return;
+    }
+
+    const selectedTargetHouse = houses.find(h => h.id === houseId) || houses[0];
+    const res = await sendInquiry(
+      finalName,
+      finalEmail,
+      selectedTargetHouse?.name || 'Alojamiento',
+      subject.trim(),
+      message.trim()
+    );
+
+    if (res.success) {
+      setSubject('');
+      setMessage('');
+      showToast(`✉️ Mensaje enviado a ${hostProfile.name}. Te responderemos pronto.`);
+    } else {
+      showToast('Error al enviar el mensaje: ' + (res.error || 'Error'));
+    }
+  });
+
   return (
     <div className="animate-fade-in py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
@@ -75,8 +127,8 @@ export function ContactView({
                 <input 
                   type="text" 
                   placeholder="Tu nombre completo" 
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
                 />
               </div>
@@ -85,8 +137,8 @@ export function ContactView({
                 <input 
                   type="email" 
                   placeholder="tu@correo.com" 
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
                 />
               </div>
@@ -95,8 +147,8 @@ export function ContactView({
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Alojamiento de interés</label>
               <select 
-                value={contactHouseId}
-                onChange={(e) => setContactHouseId(e.target.value)}
+                value={houseId}
+                onChange={(e) => setHouseId(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3.5 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
               >
                 {houses.map(h => (
@@ -110,8 +162,8 @@ export function ContactView({
               <input 
                 type="text" 
                 placeholder="Ej. Consulta sobre disponibilidad y zona de trabajo" 
-                value={contactSubject}
-                onChange={(e) => setContactSubject(e.target.value)}
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
               />
             </div>
@@ -120,14 +172,14 @@ export function ContactView({
               <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Mensaje</label>
               <textarea 
                 placeholder="Cuéntale a la anfitriona lo que necesitas o las fechas que tienes en mente..." 
-                value={contactMessage}
-                onChange={(e) => setContactMessage(e.target.value)}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium min-h-[120px] resize-vertical"
               ></textarea>
             </div>
 
             <button 
-              onClick={handleSendInquiry}
+              onClick={handleSubmit}
               className="w-full py-3.5 bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] rounded-full text-xs font-semibold uppercase tracking-widest shadow-sm hover:shadow transition-all"
             >
               Enviar consulta

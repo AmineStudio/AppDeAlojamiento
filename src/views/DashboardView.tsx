@@ -30,24 +30,28 @@ import { PropertiesTab } from './Dashboard/Tabs/PropertiesTab';
 import { StoriesTab } from './Dashboard/Tabs/StoriesTab';
 import { InquiriesTab } from './Dashboard/Tabs/InquiriesTab';
 import { SettingsTab } from './Dashboard/Tabs/SettingsTab';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface DashboardViewProps {
-  user: { name: string; email: string; role: 'guest' | 'host' } | null;
-  triggerLoginModal: (tab?: 'signin' | 'signup') => void;
-  dashActiveTab: string;
-  setDashActiveTab: (tab: string) => void;
-  inquiries: MessageInquiry[];
+  user?: { name: string; email: string; role: 'guest' | 'host' } | null;
+  triggerLoginModal?: (tab?: 'signin' | 'signup') => void;
+  dashActiveTab?: string;
+  setDashActiveTab?: (tab: string) => void;
+  inquiries?: MessageInquiry[];
   setInquiries?: React.Dispatch<React.SetStateAction<MessageInquiry[]>>;
-  toggleInquiryRead: (id: string) => void;
-  houses: House[];
-  blogPosts: BlogPost[];
+  toggleInquiryRead?: (id: string) => void;
+  houses?: House[];
+  blogPosts?: BlogPost[];
   setBlogPosts?: React.Dispatch<React.SetStateAction<BlogPost[]>>;
-  hostProfile: HostProfile;
-  setHostProfile: React.Dispatch<React.SetStateAction<HostProfile>>;
-  selectedHouseId: string;
-  setSelectedHouseId: (id: string) => void;
-  activeHouse: House;
-  roomsByHouse: Record<string, Room[]>;
+  hostProfile?: HostProfile;
+  setHostProfile?: React.Dispatch<React.SetStateAction<HostProfile>>;
+  selectedHouseId?: string;
+  setSelectedHouseId?: (id: string) => void;
+  activeHouse?: House;
+  roomsByHouse?: Record<string, Room[]>;
   setHouses?: React.Dispatch<React.SetStateAction<House[]>>;
   setRoomsByHouse?: React.Dispatch<React.SetStateAction<Record<string, Room[]>>>;
   editPricePrefix?: Record<string, number>;
@@ -58,7 +62,7 @@ interface DashboardViewProps {
   handleRemoveRoomPhoto?: (roomId: string, index: number) => void;
   handleAddRoomPhoto?: (roomId: string) => void;
   handleHostSavePricing?: () => void;
-  showToast: (msg: string) => void;
+  showToast?: (msg: string) => void;
   newBlogTitle?: string;
   setNewBlogTitle?: (title: string) => void;
   newBlogCategory?: string;
@@ -68,13 +72,13 @@ interface DashboardViewProps {
   newBlogContent?: string;
   setNewBlogContent?: (content: string) => void;
   handlePublishStory?: () => void;
-  handleReplyInquiry: (id: string, message: string, role: 'host' | 'guest') => void;
-  handleNavigate: (page: string, params?: { houseId?: string; blogId?: string }) => void;
-  loadFailed: boolean;
-  hasUnsavedChanges: boolean;
-  setHasUnsavedChanges: (val: boolean) => void;
-  isSaving: boolean;
-  handleManualSave: () => void;
+  handleReplyInquiry?: (id: string, message: string, role: 'host' | 'guest') => void;
+  handleNavigate?: (page: string, params?: { houseId?: string; blogId?: string }) => void;
+  loadFailed?: boolean;
+  hasUnsavedChanges?: boolean;
+  setHasUnsavedChanges?: (val: boolean) => void;
+  isSaving?: boolean;
+  handleManualSave?: () => void;
 
   onSaveHouse?: (house: House, isEdit: boolean) => void;
   onDeleteHouse?: (houseId: string) => void;
@@ -84,36 +88,148 @@ interface DashboardViewProps {
   onDeleteStory?: (storyId: string) => void;
 }
 
-export function DashboardView({
-  user,
-  triggerLoginModal,
-  dashActiveTab,
-  setDashActiveTab,
-  inquiries,
-  toggleInquiryRead,
-  houses,
-  blogPosts,
-  hostProfile,
-  setHostProfile,
-  selectedHouseId,
-  setSelectedHouseId,
-  activeHouse,
-  roomsByHouse,
-  showToast,
-  handleReplyInquiry,
-  handleNavigate,
-  loadFailed,
-  hasUnsavedChanges,
-  setHasUnsavedChanges,
-  isSaving,
-  handleManualSave,
-  onSaveHouse,
-  onDeleteHouse,
-  onSaveRoom,
-  onDeleteRoom,
-  onSaveStory,
-  onDeleteStory
-}: DashboardViewProps) {
+export function DashboardView(props: DashboardViewProps) {
+  const navigate = useNavigate();
+  const { user: ctxUser, triggerLoginModal: ctxTriggerLoginModal } = useAuth();
+  const {
+    houses: ctxHouses,
+    roomsByHouse: ctxRoomsByHouse,
+    inquiries: ctxInquiries,
+    blogPosts: ctxBlogPosts,
+    hostProfile: ctxHostProfile,
+    setHostProfile: ctxSetHostProfile,
+    loadFailed: ctxLoadFailed,
+    hasUnsavedChanges: ctxHasUnsavedChanges,
+    setHasUnsavedChanges: ctxSetHasUnsavedChanges,
+    isSaving: ctxIsSaving,
+    saveHostProfile,
+    saveHouse,
+    deleteHouse,
+    saveRoom,
+    deleteRoom,
+    saveStory,
+    deleteStory,
+    replyInquiry,
+    toggleInquiryRead: ctxToggleInquiryRead,
+  } = useData();
+  const { showToast: ctxShowToast } = useToast();
+
+  const user = props.user !== undefined ? props.user : ctxUser;
+  const triggerLoginModal = props.triggerLoginModal || ctxTriggerLoginModal;
+  const showToast = props.showToast || ctxShowToast;
+  const houses = props.houses || ctxHouses;
+  const roomsByHouse = props.roomsByHouse || ctxRoomsByHouse;
+  const inquiries = props.inquiries || ctxInquiries;
+  const blogPosts = props.blogPosts || ctxBlogPosts;
+  const hostProfile = props.hostProfile || ctxHostProfile;
+  const setHostProfile = props.setHostProfile || ctxSetHostProfile;
+  const loadFailed = props.loadFailed !== undefined ? props.loadFailed : ctxLoadFailed;
+  const hasUnsavedChanges = props.hasUnsavedChanges !== undefined ? props.hasUnsavedChanges : ctxHasUnsavedChanges;
+  const setHasUnsavedChanges = props.setHasUnsavedChanges || ctxSetHasUnsavedChanges;
+  const isSaving = props.isSaving !== undefined ? props.isSaving : ctxIsSaving;
+
+  const [localDashTab, setLocalDashTab] = useState<string>('listings');
+  const dashActiveTab = props.dashActiveTab || localDashTab;
+  const setDashActiveTab = props.setDashActiveTab || setLocalDashTab;
+
+  const [localSelectedHouseId, setLocalSelectedHouseId] = useState<string>(houses[0]?.id || '');
+  const selectedHouseId = props.selectedHouseId || localSelectedHouseId || houses[0]?.id || '';
+  const setSelectedHouseId = props.setSelectedHouseId || setLocalSelectedHouseId;
+
+  const activeHouse = props.activeHouse || houses.find(h => h.id === selectedHouseId) || houses[0];
+
+  const handleNavigate = props.handleNavigate || ((page: string, params?: { houseId?: string; blogId?: string }) => {
+    if (page === 'detail' && params?.houseId) {
+      navigate(`/alojamiento/${params.houseId}`);
+    } else if (page === 'home') {
+      navigate('/');
+    } else if (page === 'blog') {
+      navigate('/historias');
+    } else if (page === 'contact') {
+      navigate('/contacto');
+    } else if (page === 'inbox') {
+      navigate('/mensajes');
+    }
+  });
+
+  const onSaveHouse = props.onSaveHouse || (async (h: House, isEdit: boolean) => {
+    const res = await saveHouse(h, isEdit);
+    if (res.success) {
+      showToast(isEdit ? `Alojamiento "${h.name}" actualizado.` : `Alojamiento "${h.name}" creado con éxito.`);
+    } else {
+      showToast('Error al guardar: ' + (res.error || 'Error'));
+    }
+  });
+
+  const onDeleteHouse = props.onDeleteHouse || (async (hId: string) => {
+    const target = houses.find(h => h.id === hId);
+    const res = await deleteHouse(hId);
+    if (res.success) {
+      showToast(`Alojamiento "${target?.name || hId}" eliminado.`);
+    } else {
+      showToast('Error al eliminar: ' + (res.error || 'Error'));
+    }
+  });
+
+  const onSaveRoom = props.onSaveRoom || (async (tHouseId: string, r: Room, isEdit: boolean, origHouseId?: string) => {
+    const res = await saveRoom(tHouseId, r, isEdit, origHouseId);
+    if (res.success) {
+      showToast(isEdit ? `Habitación "${r.name}" actualizada.` : `Habitación "${r.name}" creada con éxito.`);
+    } else {
+      showToast('Error al guardar: ' + (res.error || 'Error'));
+    }
+  });
+
+  const onDeleteRoom = props.onDeleteRoom || (async (hId: string, rId: string) => {
+    const room = (roomsByHouse[hId] || []).find(r => r.id === rId);
+    const res = await deleteRoom(hId, rId);
+    if (res.success) {
+      showToast(`Habitación "${room?.name || rId}" eliminada.`);
+    } else {
+      showToast('Error al eliminar: ' + (res.error || 'Error'));
+    }
+  });
+
+  const onSaveStory = props.onSaveStory || (async (s: BlogPost, isEdit: boolean) => {
+    const res = await saveStory(s, isEdit);
+    if (res.success) {
+      showToast(isEdit ? `Historia "${s.title}" actualizada.` : `Historia "${s.title}" publicada en el blog.`);
+    } else {
+      showToast('Error al guardar: ' + (res.error || 'Error'));
+    }
+  });
+
+  const onDeleteStory = props.onDeleteStory || (async (sId: string) => {
+    const story = blogPosts.find(b => b.id === sId);
+    const res = await deleteStory(sId);
+    if (res.success) {
+      showToast(`Historia "${story?.title || sId}" eliminada.`);
+    } else {
+      showToast('Error al eliminar: ' + (res.error || 'Error'));
+    }
+  });
+
+  const toggleInquiryRead = props.toggleInquiryRead || (async (id: string) => {
+    await ctxToggleInquiryRead(id);
+  });
+
+  const handleReplyInquiry = props.handleReplyInquiry || (async (id: string, msg: string, role: 'host' | 'guest') => {
+    const res = await replyInquiry(id, msg, role);
+    if (res.success) {
+      showToast('✉️ Respuesta enviada con éxito.');
+    } else {
+      showToast('Error al enviar respuesta: ' + (res.error || 'Error'));
+    }
+  });
+
+  const handleManualSave = props.handleManualSave || (async () => {
+    const ok = await saveHostProfile(hostProfile);
+    if (ok) {
+      showToast(textos.notificaciones.datosSincronizados);
+    } else {
+      showToast(textos.notificaciones.errorGuardar);
+    }
+  });
   const tPan = textos.panel;
   const tCas = textos.casas;
   const tHab = textos.habitaciones;

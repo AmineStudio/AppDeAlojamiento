@@ -1,23 +1,52 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Send } from 'lucide-react';
 import { MilaLogo } from './MilaLogo';
 import { House } from '../types';
+import { useData } from '../contexts/DataContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface FooterProps {
   houses?: House[];
-  handleNavigate: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard') => void;
-  handleHouseClick: (houseId: string) => void;
-  showToast: (msg: string) => void;
+  handleNavigate?: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard') => void;
+  handleHouseClick?: (houseId: string) => void;
+  showToast?: (msg: string) => void;
 }
 
-export function Footer({ houses = [], handleNavigate, handleHouseClick, showToast }: FooterProps) {
+export function Footer(props: FooterProps) {
   const currentYear = new Date().getFullYear();
+  const navigate = useNavigate();
+  const { houses: ctxHouses } = useData();
+  const { showToast: ctxShowToast } = useToast();
+
+  const houses = props.houses || ctxHouses;
+  const showToast = props.showToast || ctxShowToast;
+
+  const onHouseClick = (houseId: string) => {
+    if (props.handleHouseClick) {
+      props.handleHouseClick(houseId);
+    } else {
+      navigate(`/alojamiento/${houseId}`);
+    }
+  };
+
+  const onNavigate = (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard') => {
+    if (page === 'home') navigate('/');
+    else if (page === 'blog') navigate('/historias');
+    else if (page === 'contact') navigate('/contacto');
+    else if (page === 'dashboard') navigate('/panel');
+    else if (page === 'detail') navigate('/');
+    
+    if (props.handleNavigate) {
+      props.handleNavigate(page);
+    }
+  };
 
   return (
     <footer className="bg-[#3F434D] text-[#F3ECDA]/70 pt-20 pb-10 px-4 sm:px-6 lg:px-8 border-t border-[rgba(255,255,255,0.05)] mt-24">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5 cursor-pointer" onClick={() => onNavigate('home')}>
             <MilaLogo className="h-11 w-auto" />
             <span className="font-display font-medium text-lg leading-4 tracking-wider uppercase text-white">M.I.L.A</span>
           </div>
@@ -31,7 +60,7 @@ export function Footer({ houses = [], handleNavigate, handleHouseClick, showToas
             {houses.map((house) => (
               <li key={house.id}>
                 <button 
-                  onClick={() => handleHouseClick(house.id)} 
+                  onClick={() => onHouseClick(house.id)} 
                   className="hover:text-white transition-colors text-left"
                 >
                   {house.name}
@@ -46,9 +75,9 @@ export function Footer({ houses = [], handleNavigate, handleHouseClick, showToas
         <div>
           <h4 className="text-[10px] font-bold uppercase tracking-widest text-white mb-4">Navegación</h4>
           <ul className="space-y-2 text-xs">
-            <li><button onClick={() => handleNavigate('home')} className="hover:text-white transition-colors">Catálogo de estancias</button></li>
-            <li><button onClick={() => handleNavigate('blog')} className="hover:text-white transition-colors">Historias y consejos locales</button></li>
-            <li><button onClick={() => handleNavigate('contact')} className="hover:text-white transition-colors">Contactar con la anfitriona</button></li>
+            <li><button onClick={() => onNavigate('home')} className="hover:text-white transition-colors">Catálogo de estancias</button></li>
+            <li><button onClick={() => onNavigate('blog')} className="hover:text-white transition-colors">Historias y consejos locales</button></li>
+            <li><button onClick={() => onNavigate('contact')} className="hover:text-white transition-colors">Contactar con la anfitriona</button></li>
           </ul>
         </div>
         <div>

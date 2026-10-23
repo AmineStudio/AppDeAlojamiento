@@ -1,15 +1,37 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { House } from '../types';
+import { useData } from '../contexts/DataContext';
 
 interface HomeViewProps {
-  houses: House[];
-  handleNavigate: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard') => void;
-  handleHouseClick: (houseId: string) => void;
-  showToast: (msg: string) => void;
+  houses?: House[];
+  handleNavigate?: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard') => void;
+  handleHouseClick?: (houseId: string) => void;
+  showToast?: (msg: string) => void;
 }
 
-export function HomeView({ houses, handleNavigate, handleHouseClick }: HomeViewProps) {
+export function HomeView(props: HomeViewProps) {
+  const navigate = useNavigate();
+  const { houses: ctxHouses } = useData();
+  const houses = props.houses || ctxHouses;
+
+  const onHouseClick = (id: string) => {
+    if (props.handleHouseClick) {
+      props.handleHouseClick(id);
+    } else {
+      navigate(`/alojamiento/${id}`);
+    }
+  };
+
+  const onBlogClick = () => {
+    if (props.handleNavigate) {
+      props.handleNavigate('blog');
+    } else {
+      navigate('/historias');
+    }
+  };
+
   const avgRating = houses.length > 0
     ? (houses.reduce((acc, h) => acc + (h.rating || 0), 0) / houses.length).toFixed(2)
     : '5.00';
@@ -40,7 +62,7 @@ export function HomeView({ houses, handleNavigate, handleHouseClick }: HomeViewP
             <a href="#stays" className="py-3 px-8 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] shadow-xl hover:shadow-2xl transition-all duration-300">
               Ver Alojamientos
             </a>
-            <button onClick={() => handleNavigate('blog')} className="py-3 px-8 rounded-full text-xs font-semibold uppercase tracking-wider bg-white text-[#3F434D] border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] transition-all duration-300">
+            <button onClick={onBlogClick} className="py-3 px-8 rounded-full text-xs font-semibold uppercase tracking-wider bg-white text-[#3F434D] border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] transition-all duration-300">
               Leer Historias Locales
             </button>
           </div>
@@ -89,7 +111,7 @@ export function HomeView({ houses, handleNavigate, handleHouseClick }: HomeViewP
             {houses.map((h) => (
               <div 
                 key={h.id} 
-                onClick={() => handleHouseClick(h.id)}
+                onClick={() => onHouseClick(h.id)}
                 className="group cursor-pointer bg-[#FBF7EC] rounded-3xl overflow-hidden border border-[rgba(63,67,77,0.06)] hover:shadow-2xl transition-all duration-300 flex flex-col h-full"
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-200">

@@ -1,65 +1,162 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Users, FileText, Star, Calendar as CalendarIcon } from 'lucide-react';
 import { House, Room, GuestReview } from '../types';
+import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { useBookingCalendar } from '../hooks/useBookingCalendar';
+import { reviewsService } from '../services';
 
 interface DetailViewProps {
-  handleNavigate: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard' | 'inbox') => void;
-  activeHouse: House;
-  showToast: (msg: string) => void;
-  roomsByHouse: Record<string, Room[]>;
-  checkInDate: Date | null;
-  setCheckInDate: (d: Date | null) => void;
-  checkOutDate: Date | null;
-  setCheckOutDate: (d: Date | null) => void;
-  reviewsByHouse: Record<string, GuestReview[]>;
-  calendarOpen: boolean;
-  setCalendarOpen: (open: boolean) => void;
-  currentCalMonth: Date;
-  setCurrentCalMonth: React.Dispatch<React.SetStateAction<Date>>;
-  dateToKey: (d: Date) => string;
-  isDatePast: (d: Date) => boolean;
-  isDateBooked: (d: Date) => boolean;
-  selectDate: (d: Date) => void;
-  guestCount: number;
-  setGuestCount: (count: number) => void;
-  triggerBookingSuccess: (totalPrice: number) => void;
-  getDaysCount: () => number;
-  user: { name: string; email: string; role: 'host' | 'guest' } | null;
-  handleAddReview: (houseId: string, rating: number, comment: string) => void;
-  canReview: boolean;
+  handleNavigate?: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard' | 'inbox') => void;
+  activeHouse?: House;
+  showToast?: (msg: string) => void;
+  roomsByHouse?: Record<string, Room[]>;
+  checkInDate?: Date | null;
+  setCheckInDate?: (d: Date | null) => void;
+  checkOutDate?: Date | null;
+  setCheckOutDate?: (d: Date | null) => void;
+  reviewsByHouse?: Record<string, GuestReview[]>;
+  calendarOpen?: boolean;
+  setCalendarOpen?: (open: boolean) => void;
+  currentCalMonth?: Date;
+  setCurrentCalMonth?: React.Dispatch<React.SetStateAction<Date>>;
+  dateToKey?: (d: Date) => string;
+  isDatePast?: (d: Date) => boolean;
+  isDateBooked?: (d: Date) => boolean;
+  selectDate?: (d: Date) => void;
+  guestCount?: number;
+  setGuestCount?: (count: number) => void;
+  triggerBookingSuccess?: (totalPrice: number) => void;
+  getDaysCount?: () => number;
+  user?: { name: string; email: string; role: 'host' | 'guest' } | null;
+  handleAddReview?: (houseId: string, rating: number, comment: string) => void;
+  canReview?: boolean;
 }
 
-export function DetailView({
-  handleNavigate,
-  activeHouse,
-  showToast,
-  roomsByHouse,
-  checkInDate,
-  setCheckInDate,
-  checkOutDate,
-  setCheckOutDate,
-  reviewsByHouse,
-  calendarOpen,
-  setCalendarOpen,
-  currentCalMonth,
-  setCurrentCalMonth,
-  dateToKey,
-  isDatePast,
-  isDateBooked,
-  selectDate,
-  guestCount,
-  setGuestCount,
-  triggerBookingSuccess,
-  getDaysCount,
-  handleAddReview,
-  canReview
-}: DetailViewProps) {
-  const [selectedRoomId, setSelectedRoomId] = React.useState<string | null>(null);
-  
-  React.useEffect(() => {
-    setSelectedRoomId(null);
-  }, [activeHouse.id]);
+export function DetailView(props: DetailViewProps) {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { 
+    houses, 
+    roomsByHouse: ctxRoomsByHouse, 
+    reviewsByHouse: ctxReviewsByHouse, 
+    setReviewsByHouse,
+    pastBookings,
+    createBooking,
+    addReview
+  } = useData();
+  const { user: ctxUser, triggerLoginModal } = useAuth();
+  const { showToast: ctxShowToast } = useToast();
 
+  const user = props.user !== undefined ? props.user : ctxUser;
+  const showToast = props.showToast || ctxShowToast;
+  const roomsByHouse = props.roomsByHouse || ctxRoomsByHouse;
+  const reviewsByHouse = props.reviewsByHouse || ctxReviewsByHouse;
+
+  const activeHouse = props.activeHouse || houses.find(h => h.id === id) || houses[0];
+
+  const internalCalendar = useBookingCalendar({
+    houseId: activeHouse?.id || '',
+    onBlockedDateSelected: (msg) => showToast(msg)
+  });
+
+  const checkInDate = props.checkInDate !== undefined ? props.checkInDate : internalCalendar.checkInDate;
+  const setCheckInDate = props.setCheckInDate || internalCalendar.setCheckInDate;
+  const checkOutDate = props.checkOutDate !== undefined ? props.checkOutDate : internalCalendar.checkOutDate;
+  const setCheckOutDate = props.setCheckOutDate || internalCalendar.setCheckOutDate;
+  const calendarOpen = props.calendarOpen !== undefined ? props.calendarOpen : internalCalendar.calendarOpen;
+  const setCalendarOpen = props.setCalendarOpen || internalCalendar.setCalendarOpen;
+  const currentCalMonth = props.currentCalMonth !== undefined ? props.currentCalMonth : internalCalendar.currentCalMonth;
+  const setCurrentCalMonth = props.setCurrentCalMonth || internalCalendar.setCurrentCalMonth;
+  const dateToKey = props.dateToKey || internalCalendar.dateToKey;
+  const isDatePast = props.isDatePast || internalCalendar.isDatePast;
+  const isDateBooked = props.isDateBooked || internalCalendar.isDateBooked;
+  const selectDate = props.selectDate || internalCalendar.selectDate;
+  const guestCount = props.guestCount !== undefined ? props.guestCount : internalCalendar.guestCount;
+  const setGuestCount = props.setGuestCount || internalCalendar.setGuestCount;
+  const getDaysCount = props.getDaysCount || internalCalendar.getDaysCount;
+
+  // Suscribirse a reseñas en tiempo real para esta propiedad
+  useEffect(() => {
+    if (activeHouse?.id) {
+      const unsub = reviewsService.subscribeToReviews(activeHouse.id, (reviews) => {
+        setReviewsByHouse(prev => ({
+          ...prev,
+          [activeHouse.id]: reviews
+        }));
+      });
+      return () => unsub();
+    }
+  }, [activeHouse?.id, setReviewsByHouse]);
+
+  const canReview = props.canReview !== undefined ? props.canReview : Boolean(
+    user?.role === 'guest' && 
+    activeHouse && 
+    pastBookings.some(b => b.guestEmail.toLowerCase() === (user.email || '').toLowerCase() && b.houseId === activeHouse.id)
+  );
+
+  const handleAddReview = props.handleAddReview || (async (houseId: string, rating: number, comment: string) => {
+    if (!user) {
+      showToast('Debes iniciar sesión para dejar una reseña.');
+      triggerLoginModal('signin');
+      return;
+    }
+    const res = await addReview(houseId, user.name, rating, comment);
+    if (res.success) {
+      showToast('✨ ¡Muchas gracias por tu reseña!');
+    } else {
+      showToast('Error al publicar la reseña: ' + (res.error || 'Error'));
+    }
+  });
+
+  const triggerBookingSuccess = props.triggerBookingSuccess || (async (totalPrice: number) => {
+    if (!user) {
+      triggerLoginModal('signin');
+      return;
+    }
+    if (user.role === 'host') {
+      showToast('Como anfitriona no puedes reservar tus propios alojamientos.');
+      return;
+    }
+    const days = getDaysCount();
+    const res = await createBooking(user.email, activeHouse.id, {
+      totalPrice,
+      days,
+      checkIn: checkInDate ? dateToKey(checkInDate) : undefined,
+      checkOut: checkOutDate ? dateToKey(checkOutDate) : undefined
+    });
+    if (res.success) {
+      showToast(`🎉 ¡Solicitud enviada! Reserva registrada de ${days} noches en ${activeHouse.name}. Total: ${totalPrice}€`);
+      setCheckInDate(null);
+      setCheckOutDate(null);
+    } else {
+      showToast('Error al registrar la reserva: ' + (res.error || 'Error'));
+    }
+  });
+
+  const onNavigateHome = () => {
+    if (props.handleNavigate) {
+      props.handleNavigate('home');
+    } else {
+      navigate('/');
+    }
+  };
+
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    setSelectedRoomId(null);
+  }, [activeHouse?.id]);
+
+  if (!activeHouse) {
+    return (
+      <div className="py-24 text-center">
+        <p className="text-sm text-[#6E727C]">Cargando información del alojamiento...</p>
+      </div>
+    );
+  }
   const activeRooms = roomsByHouse[activeHouse.id] || [];
   const selectedRoom = activeRooms.find(r => r.id === selectedRoomId) || activeRooms[0];
   const currentPrice = selectedRoom ? selectedRoom.price : activeHouse.pricePerNight;
@@ -84,7 +181,7 @@ export function DetailView({
         
         {/* Back breadcrumb navigation */}
         <button 
-          onClick={() => handleNavigate('home')}
+          onClick={onNavigateHome}
           className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] mb-8"
         >
           ← Volver al catálogo
