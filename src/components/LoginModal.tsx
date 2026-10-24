@@ -10,7 +10,6 @@ import {
   signInWithPopup 
 } from 'firebase/auth';
 import { isAdminEmail } from '../config/admins';
-import { useAuth } from '../contexts/AuthContext';
 import textos from '../content/textos.json';
 
 interface LoginModalProps {
@@ -24,7 +23,6 @@ export function LoginModal({
   setLoginModalOpen,
   showToast
 }: LoginModalProps) {
-  const { loginAsHostDemo } = useAuth();
   const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -183,19 +181,6 @@ export function LoginModal({
                 </svg>
                 Google
               </button>
-
-              {loginAsHostDemo && (
-                <button 
-                  type="button"
-                  onClick={() => {
-                    loginAsHostDemo();
-                    showToast(tAuth.welcomeHostToast);
-                  }}
-                  className="mt-3 w-full bg-[#F5EFE0] border border-[rgba(63,67,77,0.12)] text-[#3F434D] hover:bg-[#F0DDBE] py-2.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-                >
-                  {textos.panel.calendarioTab.demoHostLogin}
-                </button>
-              )}
             </div>
 
             <div className="mt-4 flex flex-col items-center gap-2 text-xs">

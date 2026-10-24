@@ -57,30 +57,34 @@ export function Navigation(props: NavigationProps) {
         return;
       }
       navigate('/panel');
-    } else if (page === 'home') {
-      navigate('/');
-    } else if (page === 'blog') {
-      navigate('/historias');
-    } else if (page === 'contact') {
-      navigate('/contacto');
     } else if (page === 'inbox') {
       navigate('/mensajes');
-    } else if (page === 'detail') {
-      navigate('/');
+    } else {
+      const sectionMap: Record<string, string> = {
+        home: 'stays',
+        blog: 'stories',
+        contact: 'contact',
+        detail: 'stays',
+      };
+      const sectionId = sectionMap[page];
+      if (location.pathname === '/') {
+        const el = sectionId ? document.getElementById(sectionId) : null;
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else {
+        navigate(`/#${sectionId || ''}`);
+      }
     }
     
     if (props.handleNavigate) {
       props.handleNavigate(page);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserDropdownOpen(false);
     setMobileMenuOpen(false);
   };
-
-  const isHomeActive = location.pathname === '/' || location.pathname.startsWith('/alojamiento');
-  const isBlogActive = location.pathname.startsWith('/historias');
-  const isContactActive = location.pathname.startsWith('/contacto');
-  const isDashboardActive = location.pathname.startsWith('/panel');
 
   return (
     <nav className="sticky top-0 z-40 bg-[rgba(250,246,236,0.92)] backdrop-blur-xl border-b border-[rgba(63,67,77,0.1)]">
@@ -96,42 +100,26 @@ export function Navigation(props: NavigationProps) {
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation Links (Clean One-Page) */}
           <div className="hidden md:flex items-center gap-1 bg-[#F5EFE0] p-1.5 rounded-full border border-[rgba(63,67,77,0.06)] shadow-inner">
             <button 
               onClick={() => onNav('home')} 
-              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isHomeActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
+              className="py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] hover:bg-white/60 transition-all duration-200"
             >
               {tNav.stays}
             </button>
             <button 
               onClick={() => onNav('blog')} 
-              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isBlogActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
+              className="py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] hover:bg-white/60 transition-all duration-200"
             >
               {tNav.stories}
             </button>
             <button 
               onClick={() => onNav('contact')} 
-              className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isContactActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
+              className="py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] hover:bg-white/60 transition-all duration-200"
             >
               {tNav.contact}
             </button>
-            {user && user.role === 'host' ? (
-              <button 
-                onClick={() => onNav('dashboard')} 
-                className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${isDashboardActive ? 'bg-[#A7AB5E] text-white shadow-md' : 'text-[#A7AB5E] font-bold hover:bg-[#F5EFE0]'}`}
-              >
-                <span>👑</span> {tNav.hostDashboard}
-              </button>
-            ) : (
-              <button 
-                onClick={() => onNav('dashboard')} 
-                className="py-2 px-4 rounded-full text-[11px] font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] transition-all"
-                title={tNav.hostAccessTitle}
-              >
-                {tNav.hostAccess}
-              </button>
-            )}
           </div>
 
           {/* User action chips in Navbar */}
@@ -224,21 +212,6 @@ export function Navigation(props: NavigationProps) {
             >
               {tNav.contact}
             </button>
-            {user && user.role === 'host' ? (
-              <button 
-                onClick={() => onNav('dashboard')} 
-                className="text-left text-sm font-bold uppercase tracking-wider text-[#A7AB5E] flex items-center gap-1.5"
-              >
-                <span>👑</span> {tNav.hostDashboard}
-              </button>
-            ) : (
-              <button 
-                onClick={() => onNav('dashboard')} 
-                className="text-left text-sm font-semibold uppercase tracking-wider text-[#6E727C]"
-              >
-                {tNav.hostAccess}
-              </button>
-            )}
             
             <div className="border-t border-[rgba(63,67,77,0.1)] my-2"></div>
             
