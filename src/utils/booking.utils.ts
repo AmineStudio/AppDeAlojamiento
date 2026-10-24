@@ -41,3 +41,71 @@ export const calculateTotalPrice = (pricePerNight: number, days: number): number
   if (days <= 0 || pricePerNight <= 0) return 0;
   return pricePerNight * days;
 };
+
+/**
+ * Retorna todas las claves de fecha (YYYY-MM-DD) entre dos fechas inclusive.
+ */
+export const getDateRangeKeys = (startDate: Date, endDate: Date): string[] => {
+  const keys: string[] = [];
+  const start = new Date(Math.min(startDate.getTime(), endDate.getTime()));
+  const end = new Date(Math.max(startDate.getTime(), endDate.getTime()));
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  const curr = new Date(start);
+  while (curr <= end) {
+    keys.push(dateToKey(curr));
+    curr.setDate(curr.getDate() + 1);
+  }
+  return keys;
+};
+
+/**
+ * Alterna (agrega o remueve) una fecha en la lista de fechas bloqueadas y mantiene el orden cronológico.
+ */
+export const toggleDateInBlockedList = (
+  blockedDates: string[] | undefined,
+  dateKey: string
+): string[] => {
+  const current = new Set(blockedDates || []);
+  if (current.has(dateKey)) {
+    current.delete(dateKey);
+  } else {
+    current.add(dateKey);
+  }
+  return Array.from(current).sort();
+};
+
+/**
+ * Agrega un conjunto de fechas a la lista de bloqueadas asegurando unicidad y orden cronológico.
+ */
+export const addDatesToBlockedList = (
+  blockedDates: string[] | undefined,
+  newDates: string[]
+): string[] => {
+  const combined = new Set(blockedDates || []);
+  newDates.forEach(d => combined.add(d));
+  return Array.from(combined).sort();
+};
+
+/**
+ * Remueve un conjunto de fechas de la lista de fechas bloqueadas.
+ */
+export const removeDatesFromBlockedList = (
+  blockedDates: string[] | undefined,
+  datesToRemove: string[]
+): string[] => {
+  const toRemove = new Set(datesToRemove);
+  const current = blockedDates || [];
+  return current.filter(d => !toRemove.has(d)).sort();
+};
+
+/**
+ * Formatea una clave YYYY-MM-DD para visualización amigable (ej: "25 Oct 2026").
+ */
+export const formatDateKeyDisplay = (dateKey: string, locale: string = 'en-US'): string => {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  if (!year || !month || !day) return dateKey;
+  const d = new Date(year, month - 1, day);
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+};

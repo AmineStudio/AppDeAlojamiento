@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Search, Plus, MapPin, Bed, ExternalLink, Edit3, Trash2, Filter, Eye } from 'lucide-react';
+import { Home, Search, Plus, MapPin, Bed, ExternalLink, Edit3, Trash2, Filter, Eye, Calendar } from 'lucide-react';
 import { House, Room } from '../../../types';
 import textos from '../../../content/textos.json';
 
@@ -27,6 +27,7 @@ interface PropertiesTabProps {
   handleToggleRoomAvailability: (houseId: string, roomId: string) => void;
   handleOpenEditRoom: (room: Room, houseId: string) => void;
   handleTriggerDeleteRoom: (room: Room, houseId: string) => void;
+  handleOpenRoomCalendar?: (room: Room, house: House) => void;
 }
 
 export function PropertiesTab({
@@ -36,7 +37,7 @@ export function PropertiesTab({
   handleOpenEditHouse, handleTriggerDeleteHouse,
   roomHouseFilter, allRoomsList, houses, roomSearch, setRoomSearch,
   handleOpenCreateRoom, filteredRooms, handleToggleRoomAvailability,
-  handleOpenEditRoom, handleTriggerDeleteRoom
+  handleOpenEditRoom, handleTriggerDeleteRoom, handleOpenRoomCalendar
 }: PropertiesTabProps) {
   const tTab = textos.panel.propertiesTab;
   const tSub = textos.subidaFotos;
@@ -317,6 +318,22 @@ export function PropertiesTab({
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {handleOpenRoomCalendar && (
+                    <button
+                      onClick={() => handleOpenRoomCalendar(room, house)}
+                      className="py-1.5 px-3 bg-white border border-[rgba(63,67,77,0.1)] hover:border-[#3D7A95] hover:text-[#3D7A95] rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#3F434D] flex items-center gap-1.5 transition-all shadow-2xs"
+                      title={tHab.gestionarCalendario || 'Gestionar calendario y bloquear fechas'}
+                    >
+                      <Calendar className="h-3 w-3 text-[#3D7A95]" />
+                      <span className="hidden sm:inline">{tHab.bloquearFechas || 'Bloquear fechas'}</span>
+                      {room.blockedDates && room.blockedDates.length > 0 && (
+                        <span className="px-1.5 py-0.2 bg-rose-500 text-white rounded-full text-[9px] font-bold">
+                          {room.blockedDates.length}
+                        </span>
+                      )}
+                    </button>
+                  )}
+
                   <button
                     onClick={() => handleOpenEditRoom(room, house.id)}
                     className="py-1.5 px-3 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#3F434D] hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#3F434D] flex items-center gap-1 transition-all"

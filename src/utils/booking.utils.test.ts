@@ -4,7 +4,12 @@ import {
   isDatePast, 
   calculateDaysCount, 
   isDateRangeBlocked, 
-  calculateTotalPrice 
+  calculateTotalPrice,
+  getDateRangeKeys,
+  toggleDateInBlockedList,
+  addDatesToBlockedList,
+  removeDatesFromBlockedList,
+  formatDateKeyDisplay
 } from './booking.utils';
 
 describe('booking.utils', () => {
@@ -46,5 +51,38 @@ describe('booking.utils', () => {
     expect(calculateTotalPrice(75, 4)).toBe(300);
     expect(calculateTotalPrice(0, 4)).toBe(0);
     expect(calculateTotalPrice(75, 0)).toBe(0);
+  });
+
+  it('generates all date keys in range inclusive', () => {
+    const start = new Date(2026, 9, 20); // 2026-10-20
+    const end = new Date(2026, 9, 23); // 2026-10-23
+    const keys = getDateRangeKeys(start, end);
+    expect(keys).toEqual(['2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23']);
+  });
+
+  it('toggles a date in the blocked list correctly', () => {
+    let list: string[] = ['2026-10-20', '2026-10-25'];
+    // Toggle existing date (should remove)
+    list = toggleDateInBlockedList(list, '2026-10-20');
+    expect(list).toEqual(['2026-10-25']);
+
+    // Toggle new date (should add and keep sorted)
+    list = toggleDateInBlockedList(list, '2026-10-22');
+    expect(list).toEqual(['2026-10-22', '2026-10-25']);
+  });
+
+  it('adds and removes multiple dates cleanly', () => {
+    const initial = ['2026-10-01'];
+    const added = addDatesToBlockedList(initial, ['2026-10-05', '2026-10-03', '2026-10-01']);
+    expect(added).toEqual(['2026-10-01', '2026-10-03', '2026-10-05']);
+
+    const removed = removeDatesFromBlockedList(added, ['2026-10-03', '2026-10-99']);
+    expect(removed).toEqual(['2026-10-01', '2026-10-05']);
+  });
+
+  it('formats date key display', () => {
+    const formatted = formatDateKeyDisplay('2026-10-25', 'en-US');
+    expect(formatted).toContain('25');
+    expect(formatted).toContain('2026');
   });
 });

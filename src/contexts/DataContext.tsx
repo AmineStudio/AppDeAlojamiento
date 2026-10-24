@@ -45,6 +45,7 @@ interface DataContextType {
   deleteStory: (storyId: string) => Promise<{ success: boolean; error?: string }>;
   batchUpdatePricing: (houseId: string, pricingMap: Record<string, number>) => Promise<{ success: boolean; error?: string }>;
   toggleRoomAvailable: (houseId: string, roomId: string) => Promise<{ success: boolean; error?: string }>;
+  updateRoomBlockedDates: (houseId: string, roomId: string, blockedDates: string[]) => Promise<{ success: boolean; error?: string }>;
   addHousePhoto: (houseId: string, photoUrl: string) => Promise<{ success: boolean; error?: string }>;
   removeHousePhoto: (houseId: string, index: number) => Promise<{ success: boolean; error?: string }>;
   addRoomPhoto: (houseId: string, roomId: string, photoUrl: string) => Promise<{ success: boolean; error?: string }>;
@@ -374,6 +375,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [roomsByHouse]);
 
+  const updateRoomBlockedDates = useCallback(async (houseId: string, roomId: string, blockedDates: string[]) => {
+    setRoomsByHouse(prev => {
+      const currentList = prev[houseId] || [];
+      const updated = currentList.map(r => (r.id === roomId ? { ...r, blockedDates } : r));
+      return { ...prev, [houseId]: updated };
+    });
+
+    try {
+      await roomsService.updateRoomBlockedDates(houseId, roomId, blockedDates);
+      return { success: true };
+    } catch (err: any) {
+      console.error("Error al guardar fechas bloqueadas:", err);
+      return { success: false, error: err.message };
+    }
+  }, []);
+
   const addHousePhoto = useCallback(async (houseId: string, photoUrl: string) => {
     const targetHouse = houses.find(h => h.id === houseId);
     if (!targetHouse) return { success: false, error: 'Stay not found' };
@@ -522,7 +539,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       blogPosts, setBlogPosts, hostProfile, setHostProfile, pastBookings,
       saveHostProfile, saveAppData,
       saveHouse, deleteHouse, saveRoom, deleteRoom,
-      saveStory, deleteStory, batchUpdatePricing, toggleRoomAvailable,
+      saveStory, deleteStory, batchUpdatePricing, toggleRoomAvailable, updateRoomBlockedDates,
       addHousePhoto, removeHousePhoto, addRoomPhoto, removeRoomPhoto,
       sendInquiry, replyInquiry, toggleInquiryRead,
       addReview, createBooking

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { bookingsService } from '../services';
 import { 
   dateToKey, 
@@ -10,10 +10,11 @@ import textos from '../content/textos.json';
 
 interface UseBookingCalendarOptions {
   houseId: string;
+  roomBlockedDates?: string[];
   onBlockedDateSelected?: (message: string) => void;
 }
 
-export function useBookingCalendar({ houseId, onBlockedDateSelected }: UseBookingCalendarOptions) {
+export function useBookingCalendar({ houseId, roomBlockedDates, onBlockedDateSelected }: UseBookingCalendarOptions) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
@@ -22,14 +23,34 @@ export function useBookingCalendar({ houseId, onBlockedDateSelected }: UseBookin
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [guestCount, setGuestCount] = useState<number>(2);
-  const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+  const [houseBookedDates, setHouseBookedDates] = useState<Set<string>>(new Set());
 
-  // Cargar fechas ocupadas para la propiedad actual
+  // Cargar fechas ocupadas para la propiedad actual desde reservas de Firestore
   useEffect(() => {
     if (houseId) {
-      bookingsService.fetchBookedDatesForHouse(houseId).then(setBookedDates);
+      bookingsService.fetchBookedDatesForHouse(houseId).then(setHouseBookedDates);
     }
   }, [houseId]);
+
+  // Combinar reservas de la casa con fechas bloqueadas específicamente para la habitación
+  const bookedDates = useMemo(() => {
+    const combined = new Set<string>(houseBookedDates);
+    if (roomBlockedDates && roomBlockedDates.length > 0) {
+      roomBlockedDates.forEach(d => combined.add(d));
+    }
+    return combined;
+  }, [houseBookedDates, roomBlockedDates]);
+
+  // Si las fechas seleccionadas colisionan con las nuevas fechas bloqueadas de la habitación, resetear
+  useEffect(() => {
+    if (checkInDate && checkOutDate && isDateRangeBlocked(checkInDate, checkOutDate, bookedDates)) {
+      setCheckInDate(null);
+      setCheckOutDate(null);
+      if (onBlockedDateSelected) {
+        onBlockedDateSelected(textos.notificaciones.fechasBloqueadas);
+      }
+    }
+  }, [bookedDates, checkInDate, checkOutDate, onBlockedDateSelected]);
 
   const isDateBooked = useCallback((d: Date) => {
     return bookedDates.has(dateToKey(d));

@@ -59,8 +59,13 @@ export function DetailView(props: DetailViewProps) {
 
   const activeHouse = props.activeHouse || houses.find(h => h.id === id) || houses[0];
 
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const activeRooms = roomsByHouse[activeHouse?.id || ''] || [];
+  const selectedRoom = activeRooms.find(r => r.id === selectedRoomId) || activeRooms[0];
+
   const internalCalendar = useBookingCalendar({
     houseId: activeHouse?.id || '',
+    roomBlockedDates: selectedRoom?.blockedDates,
     onBlockedDateSelected: (msg) => showToast(msg)
   });
 
@@ -151,8 +156,6 @@ export function DetailView(props: DetailViewProps) {
     }
   };
 
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  
   useEffect(() => {
     setSelectedRoomId(null);
   }, [activeHouse?.id]);
@@ -164,8 +167,6 @@ export function DetailView(props: DetailViewProps) {
       </div>
     );
   }
-  const activeRooms = roomsByHouse[activeHouse.id] || [];
-  const selectedRoom = activeRooms.find(r => r.id === selectedRoomId) || activeRooms[0];
   const currentPrice = selectedRoom ? selectedRoom.price : activeHouse.pricePerNight;
   const calculatedSubtotal = getDaysCount() * currentPrice;
 

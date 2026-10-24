@@ -39,6 +39,10 @@ export const roomsService = {
     await updateDoc(doc(db, `houses/${houseId}/rooms`, roomId), { images });
   },
 
+  async updateRoomBlockedDates(houseId: string, roomId: string, blockedDates: string[]): Promise<void> {
+    await setDoc(doc(db, `houses/${houseId}/rooms`, roomId), { blockedDates }, { merge: true });
+  },
+
   async batchUpdatePricing(houseId: string, rooms: Room[], minPrice: number): Promise<void> {
     const batch = writeBatch(db);
     rooms.forEach((r) => {

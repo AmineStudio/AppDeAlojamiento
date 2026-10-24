@@ -23,6 +23,7 @@ export interface Room {
   images: string[];
   beds: string;
   view: string;
+  blockedDates?: string[];
 }
 
 export interface GuestReview {

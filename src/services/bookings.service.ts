@@ -5,6 +5,7 @@ export interface BookingRecord {
   id?: string;
   guestEmail: string;
   houseId: string;
+  roomId?: string;
   totalPrice?: number;
   days?: number;
   checkIn?: string;
@@ -32,6 +33,7 @@ export const bookingsService = {
             id: d.id,
             guestEmail: data.guestEmail,
             houseId: data.houseId,
+            roomId: data.roomId,
             totalPrice: data.totalPrice,
             days: data.days,
             checkIn: data.checkIn,
@@ -51,11 +53,12 @@ export const bookingsService = {
   async createBooking(
     guestEmail: string,
     houseId: string,
-    options?: { totalPrice?: number; days?: number; checkIn?: string; checkOut?: string }
+    options?: { totalPrice?: number; days?: number; checkIn?: string; checkOut?: string; roomId?: string }
   ): Promise<void> {
     await addDoc(collection(db, 'pastBookings'), {
       guestEmail: guestEmail.toLowerCase(),
       houseId,
+      roomId: options?.roomId,
       totalPrice: options?.totalPrice,
       days: options?.days,
       checkIn: options?.checkIn,

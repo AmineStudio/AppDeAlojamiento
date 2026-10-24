@@ -77,7 +77,8 @@ export const initialRooms: Record<string, Room[]> = {
         'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500'
       ],
       beds: '1 King Bed',
-      view: 'City & Tree Canopy'
+      view: 'City & Tree Canopy',
+      blockedDates: []
     },
     {
       id: 'lc-double',
@@ -90,7 +91,8 @@ export const initialRooms: Record<string, Room[]> = {
         'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=500'
       ],
       beds: '1 Queen Bed',
-      view: 'Inner Courtyard & Bougainvillea'
+      view: 'Inner Courtyard & Bougainvillea',
+      blockedDates: []
     },
     {
       id: 'lc-twin',
@@ -103,7 +105,8 @@ export const initialRooms: Record<string, Room[]> = {
         'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=500'
       ],
       beds: '2 Single Beds',
-      view: 'Inner Courtyard'
+      view: 'Inner Courtyard',
+      blockedDates: []
     }
   ],
   'tafira-baja': [

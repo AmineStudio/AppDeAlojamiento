@@ -16,6 +16,7 @@ interface AuthContextType {
   triggerLoginModal: (tab?: 'signin' | 'signup') => void;
   logout: () => void;
   loginWithGoogle: () => Promise<void>;
+  loginAsHostDemo?: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,8 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const triggerLoginModal = (tab?: 'signin' | 'signup') => {
-    // Si necesitas manejar el tab inicial, podrías guardarlo en un estado extra, 
-    // pero por ahora abrimos el modal
     setLoginModalOpen(true);
   };
 
@@ -69,6 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loginAsHostDemo = () => {
+    setUser({
+      name: 'Mila',
+      email: 'mila@milanomad.es',
+      role: 'host'
+    });
+    setLoginModalOpen(false);
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -76,7 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoginModalOpen, 
       triggerLoginModal, 
       logout, 
-      loginWithGoogle 
+      loginWithGoogle,
+      loginAsHostDemo
     }}>
       {children}
     </AuthContext.Provider>

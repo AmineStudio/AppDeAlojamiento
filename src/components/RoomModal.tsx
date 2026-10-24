@@ -101,7 +101,8 @@ export function RoomModal({
       available,
       beds: beds.trim() || t.opcionesCamas[0],
       view: view.trim() || t.opcionesVistas[0],
-      images
+      images,
+      blockedDates: initialRoom?.blockedDates || []
     };
 
     onSave(houseId, roomData, isEdit, initialHouseId);
