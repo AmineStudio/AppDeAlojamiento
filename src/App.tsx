@@ -32,13 +32,21 @@ function PageLoading() {
 }
 
 /**
- * Desplaza automáticamente la ventana al inicio con cada cambio de ruta.
+ * Desplaza automáticamente la ventana al inicio o a la sección (#hash) con cada cambio de ruta.
  */
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
+    if (hash) {
+      const id = hash.replace('#', '');
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [pathname]);
+  }, [pathname, hash]);
   return null;
 }
 

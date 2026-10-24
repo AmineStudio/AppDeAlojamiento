@@ -50,16 +50,24 @@
     "craftNote": "Crafted for mindful travelers with utmost care"
   },
   "home": {
-    "badge": "Shared boutique stays for nomads and students",
-    "heroTitlePre": "Live where the",
-    "heroTitleHighlight": "Atlantic",
-    "heroTitlePost": "inspires you.",
-    "heroSubtitle": "Boutique shared coliving in the vibrant heart of Las Palmas and quiet volcanic retreats of Gran Canaria. High-speed fiber Wi-Fi and an authentic international community.",
+    "badge": "Mila Coliving · The meeting point",
+    "heroTitlePre": "where cultures meet and",
+    "heroTitleHighlight": "mindsets",
+    "heroTitlePost": "align",
+    "heroSubtitle": "Mila Coliving is more than a place to stay. It's where travelers, creatives, and remote workers from all over the world meet, share, and grow. Different cultures, one mindset: open, respectful, curious.",
     "ctaStays": "Explore Stays",
     "ctaStories": "Read Local Stories",
     "statStays": "Stays",
     "statRating": "Average Rating",
     "statEssence": "Canarian Essence",
+    "meetingPoint": {
+      "title": "It's a meeting point.",
+      "paragraph1": "We created Mila for those who believe that the best ideas are born when cultures collide. Here, nomads, artists, entrepreneurs and locals live under the same roof, sharing more than a kitchen — sharing stories, skills, and perspectives.",
+      "paragraph2": "Different backgrounds. Different languages. One common mindset: openness, collaboration, and the desire to build a more conscious way of living together.",
+      "quote": "At Mila, you don't just find a bed. You find your people.",
+      "quotePre": "At Mila, you don't just find a bed.",
+      "quoteHighlight": "You find your people."
+    },
     "sectionTitlePre": "Curated Stays by",
     "sectionSubtitle": "{count} {staysLabel} with a mindful, community atmosphere. Thoughtfully restored for comfort, productivity, and wellbeing.",
     "staysSingular": "stay",
@@ -160,7 +168,7 @@
   },
   "auth": {
     "loginTitle": "Welcome to",
-    "loginSubtitle": "Sign in to book stays or manage your host portal.",
+    "loginSubtitle": "Sign in to book your stays and manage your inquiries.",
     "registerTitle": "Join",
     "registerSubtitle": "Create an account to book stays and chat with your host.",
     "resetTitle": "Reset Password",

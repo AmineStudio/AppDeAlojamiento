@@ -33,11 +33,23 @@ export function Footer(props: FooterProps) {
   };
 
   const onNavigate = (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard') => {
-    if (page === 'home') navigate('/');
-    else if (page === 'blog') navigate('/historias');
-    else if (page === 'contact') navigate('/contacto');
-    else if (page === 'dashboard') navigate('/panel');
-    else if (page === 'detail') navigate('/');
+    const sectionMap: Record<string, string> = {
+      home: 'stays',
+      blog: 'stories',
+      contact: 'contact',
+      detail: 'stays',
+    };
+    const sectionId = sectionMap[page];
+    if (window.location.pathname === '/') {
+      const el = sectionId ? document.getElementById(sectionId) : null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } else {
+      navigate(`/#${sectionId || ''}`);
+    }
     
     if (props.handleNavigate) {
       props.handleNavigate(page);
