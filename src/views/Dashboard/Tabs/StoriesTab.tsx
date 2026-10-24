@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Plus, Eye, Edit3, Trash2, BookOpen } from 'lucide-react';
 import { BlogPost } from '../../../types';
+import textos from '../../../content/textos.json';
 
 interface StoriesTabProps {
   tHis: any;
@@ -18,6 +19,8 @@ export function StoriesTab({
   tHis, tGen, storySearch, setStorySearch, handleOpenCreateStory,
   filteredStories, handleNavigate, handleOpenEditStory, handleTriggerDeleteStory
 }: StoriesTabProps) {
+  const tTab = textos.panel.storiesTab;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-[rgba(63,67,77,0.08)] shadow-sm">
@@ -66,7 +69,7 @@ export function StoriesTab({
                   {story.excerpt}
                 </p>
                 <div className="text-[10px] text-[#A7AB5E] font-semibold">
-                  Por {story.author}
+                  {tTab.byAuthor.replace('{author}', story.author)}
                 </div>
               </div>
             </div>
@@ -107,7 +110,7 @@ export function StoriesTab({
             {tGen.sinResultados}
           </h4>
           <p className="text-xs text-[#6E727C] mb-4">
-            Comparte rincones secretos de Gran Canaria, senderos y recomendaciones con tus huéspedes.
+            {tTab.emptyDesc}
           </p>
           <button
             onClick={handleOpenCreateStory}

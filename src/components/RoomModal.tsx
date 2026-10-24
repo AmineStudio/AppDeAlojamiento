@@ -65,19 +65,19 @@ export function RoomModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!houseId) {
-      setError('Por favor selecciona el alojamiento al que pertenece esta habitación.');
+      setError(t.errores.alojamiento);
       return;
     }
     if (!name.trim()) {
-      setError('Por favor indica el nombre de la habitación.');
+      setError(t.errores.nombre);
       return;
     }
     if (!description.trim()) {
-      setError('Por favor indica una descripción.');
+      setError(t.errores.descripcion);
       return;
     }
     if (images.length === 0) {
-      setError('Por favor sube o añade al menos una foto para esta habitación.');
+      setError(t.errores.fotos);
       return;
     }
 
@@ -101,7 +101,8 @@ export function RoomModal({
       available,
       beds: beds.trim() || t.opcionesCamas[0],
       view: view.trim() || t.opcionesVistas[0],
-      images
+      images,
+      blockedDates: initialRoom?.blockedDates || []
     };
 
     onSave(houseId, roomData, isEdit, initialHouseId);

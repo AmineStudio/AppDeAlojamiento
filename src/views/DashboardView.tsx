@@ -17,37 +17,44 @@ import {
   MapPin, 
   Send,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { House, Room, MessageInquiry, HostProfile, BlogPost } from '../types';
 import { HouseModal } from '../components/HouseModal';
 import { RoomModal } from '../components/RoomModal';
 import { StoryModal } from '../components/StoryModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+import { RoomCalendarModal } from '../components/RoomCalendarModal';
 import textos from '../content/textos.json';
 
 import { PropertiesTab } from './Dashboard/Tabs/PropertiesTab';
 import { StoriesTab } from './Dashboard/Tabs/StoriesTab';
 import { InquiriesTab } from './Dashboard/Tabs/InquiriesTab';
 import { SettingsTab } from './Dashboard/Tabs/SettingsTab';
+import { CalendarTab } from './Dashboard/Tabs/CalendarTab';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface DashboardViewProps {
-  user: { name: string; email: string; role: 'guest' | 'host' } | null;
-  triggerLoginModal: (tab?: 'signin' | 'signup') => void;
-  dashActiveTab: string;
-  setDashActiveTab: (tab: string) => void;
-  inquiries: MessageInquiry[];
+  user?: { name: string; email: string; role: 'guest' | 'host' } | null;
+  triggerLoginModal?: (tab?: 'signin' | 'signup') => void;
+  dashActiveTab?: string;
+  setDashActiveTab?: (tab: string) => void;
+  inquiries?: MessageInquiry[];
   setInquiries?: React.Dispatch<React.SetStateAction<MessageInquiry[]>>;
-  toggleInquiryRead: (id: string) => void;
-  houses: House[];
-  blogPosts: BlogPost[];
+  toggleInquiryRead?: (id: string) => void;
+  houses?: House[];
+  blogPosts?: BlogPost[];
   setBlogPosts?: React.Dispatch<React.SetStateAction<BlogPost[]>>;
-  hostProfile: HostProfile;
-  setHostProfile: React.Dispatch<React.SetStateAction<HostProfile>>;
-  selectedHouseId: string;
-  setSelectedHouseId: (id: string) => void;
-  activeHouse: House;
-  roomsByHouse: Record<string, Room[]>;
+  hostProfile?: HostProfile;
+  setHostProfile?: React.Dispatch<React.SetStateAction<HostProfile>>;
+  selectedHouseId?: string;
+  setSelectedHouseId?: (id: string) => void;
+  activeHouse?: House;
+  roomsByHouse?: Record<string, Room[]>;
   setHouses?: React.Dispatch<React.SetStateAction<House[]>>;
   setRoomsByHouse?: React.Dispatch<React.SetStateAction<Record<string, Room[]>>>;
   editPricePrefix?: Record<string, number>;
@@ -58,7 +65,7 @@ interface DashboardViewProps {
   handleRemoveRoomPhoto?: (roomId: string, index: number) => void;
   handleAddRoomPhoto?: (roomId: string) => void;
   handleHostSavePricing?: () => void;
-  showToast: (msg: string) => void;
+  showToast?: (msg: string) => void;
   newBlogTitle?: string;
   setNewBlogTitle?: (title: string) => void;
   newBlogCategory?: string;
@@ -68,13 +75,13 @@ interface DashboardViewProps {
   newBlogContent?: string;
   setNewBlogContent?: (content: string) => void;
   handlePublishStory?: () => void;
-  handleReplyInquiry: (id: string, message: string, role: 'host' | 'guest') => void;
-  handleNavigate: (page: string, params?: { houseId?: string; blogId?: string }) => void;
-  loadFailed: boolean;
-  hasUnsavedChanges: boolean;
-  setHasUnsavedChanges: (val: boolean) => void;
-  isSaving: boolean;
-  handleManualSave: () => void;
+  handleReplyInquiry?: (id: string, message: string, role: 'host' | 'guest') => void;
+  handleNavigate?: (page: string, params?: { houseId?: string; blogId?: string }) => void;
+  loadFailed?: boolean;
+  hasUnsavedChanges?: boolean;
+  setHasUnsavedChanges?: (val: boolean) => void;
+  isSaving?: boolean;
+  handleManualSave?: () => void;
 
   onSaveHouse?: (house: House, isEdit: boolean) => void;
   onDeleteHouse?: (houseId: string) => void;
@@ -84,41 +91,156 @@ interface DashboardViewProps {
   onDeleteStory?: (storyId: string) => void;
 }
 
-export function DashboardView({
-  user,
-  triggerLoginModal,
-  dashActiveTab,
-  setDashActiveTab,
-  inquiries,
-  toggleInquiryRead,
-  houses,
-  blogPosts,
-  hostProfile,
-  setHostProfile,
-  selectedHouseId,
-  setSelectedHouseId,
-  activeHouse,
-  roomsByHouse,
-  showToast,
-  handleReplyInquiry,
-  handleNavigate,
-  loadFailed,
-  hasUnsavedChanges,
-  setHasUnsavedChanges,
-  isSaving,
-  handleManualSave,
-  onSaveHouse,
-  onDeleteHouse,
-  onSaveRoom,
-  onDeleteRoom,
-  onSaveStory,
-  onDeleteStory
-}: DashboardViewProps) {
+export function DashboardView(props: DashboardViewProps) {
+  const navigate = useNavigate();
+  const { user: ctxUser, triggerLoginModal: ctxTriggerLoginModal } = useAuth();
+  const {
+    houses: ctxHouses,
+    roomsByHouse: ctxRoomsByHouse,
+    inquiries: ctxInquiries,
+    blogPosts: ctxBlogPosts,
+    hostProfile: ctxHostProfile,
+    setHostProfile: ctxSetHostProfile,
+    loadFailed: ctxLoadFailed,
+    hasUnsavedChanges: ctxHasUnsavedChanges,
+    setHasUnsavedChanges: ctxSetHasUnsavedChanges,
+    isSaving: ctxIsSaving,
+    saveHostProfile,
+    saveHouse,
+    deleteHouse,
+    saveRoom,
+    deleteRoom,
+    saveStory,
+    deleteStory,
+    replyInquiry,
+    toggleInquiryRead: ctxToggleInquiryRead,
+    updateRoomBlockedDates,
+    pastBookings: ctxPastBookings,
+  } = useData();
+  const { showToast: ctxShowToast } = useToast();
+
+  const user = props.user !== undefined ? props.user : ctxUser;
+  const triggerLoginModal = props.triggerLoginModal || ctxTriggerLoginModal;
+  const showToast = props.showToast || ctxShowToast;
+  const houses = props.houses || ctxHouses;
+  const roomsByHouse = props.roomsByHouse || ctxRoomsByHouse;
+  const inquiries = props.inquiries || ctxInquiries;
+  const blogPosts = props.blogPosts || ctxBlogPosts;
+  const hostProfile = props.hostProfile || ctxHostProfile;
+  const setHostProfile = props.setHostProfile || ctxSetHostProfile;
+  const loadFailed = props.loadFailed !== undefined ? props.loadFailed : ctxLoadFailed;
+  const hasUnsavedChanges = props.hasUnsavedChanges !== undefined ? props.hasUnsavedChanges : ctxHasUnsavedChanges;
+  const setHasUnsavedChanges = props.setHasUnsavedChanges || ctxSetHasUnsavedChanges;
+  const isSaving = props.isSaving !== undefined ? props.isSaving : ctxIsSaving;
+
+  const [localDashTab, setLocalDashTab] = useState<string>('listings');
+  const dashActiveTab = props.dashActiveTab || localDashTab;
+  const setDashActiveTab = props.setDashActiveTab || setLocalDashTab;
+
+  const [localSelectedHouseId, setLocalSelectedHouseId] = useState<string>(houses[0]?.id || '');
+  const selectedHouseId = props.selectedHouseId || localSelectedHouseId || houses[0]?.id || '';
+  const setSelectedHouseId = props.setSelectedHouseId || setLocalSelectedHouseId;
+
+  const activeHouse = props.activeHouse || houses.find(h => h.id === selectedHouseId) || houses[0];
+
+  const handleNavigate = props.handleNavigate || ((page: string, params?: { houseId?: string; blogId?: string }) => {
+    if (page === 'detail' && params?.houseId) {
+      navigate(`/alojamiento/${params.houseId}`);
+    } else if (page === 'home') {
+      navigate('/');
+    } else if (page === 'blog') {
+      navigate('/historias');
+    } else if (page === 'contact') {
+      navigate('/contacto');
+    } else if (page === 'inbox') {
+      navigate('/mensajes');
+    }
+  });
+
   const tPan = textos.panel;
   const tCas = textos.casas;
   const tHab = textos.habitaciones;
   const tHis = textos.historias;
   const tGen = textos.general;
+
+  const onSaveHouse = props.onSaveHouse || (async (h: House, isEdit: boolean) => {
+    const res = await saveHouse(h, isEdit);
+    if (res.success) {
+      showToast(isEdit ? tPan.toasts.houseUpdated.replace('{name}', h.name) : tPan.toasts.houseCreated.replace('{name}', h.name));
+    } else {
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
+    }
+  });
+
+  const onDeleteHouse = props.onDeleteHouse || (async (hId: string) => {
+    const target = houses.find(h => h.id === hId);
+    const res = await deleteHouse(hId);
+    if (res.success) {
+      showToast(tPan.toasts.houseDeleted.replace('{name}', target?.name || hId));
+    } else {
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
+    }
+  });
+
+  const onSaveRoom = props.onSaveRoom || (async (tHouseId: string, r: Room, isEdit: boolean, origHouseId?: string) => {
+    const res = await saveRoom(tHouseId, r, isEdit, origHouseId);
+    if (res.success) {
+      showToast(isEdit ? tPan.toasts.roomUpdated.replace('{name}', r.name) : tPan.toasts.roomCreated.replace('{name}', r.name));
+    } else {
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
+    }
+  });
+
+  const onDeleteRoom = props.onDeleteRoom || (async (hId: string, rId: string) => {
+    const room = (roomsByHouse[hId] || []).find(r => r.id === rId);
+    const res = await deleteRoom(hId, rId);
+    if (res.success) {
+      showToast(tPan.toasts.roomDeleted.replace('{name}', room?.name || rId));
+    } else {
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
+    }
+  });
+
+  const onSaveStory = props.onSaveStory || (async (s: BlogPost, isEdit: boolean) => {
+    const res = await saveStory(s, isEdit);
+    if (res.success) {
+      showToast(isEdit ? tPan.toasts.storyUpdated.replace('{name}', s.title) : tPan.toasts.storyCreated.replace('{name}', s.title));
+    } else {
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
+    }
+  });
+
+  const onDeleteStory = props.onDeleteStory || (async (sId: string) => {
+    const story = blogPosts.find(b => b.id === sId);
+    const res = await deleteStory(sId);
+    if (res.success) {
+      showToast(tPan.toasts.storyDeleted.replace('{name}', story?.title || sId));
+    } else {
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
+    }
+  });
+
+  const toggleInquiryRead = props.toggleInquiryRead || (async (id: string) => {
+    await ctxToggleInquiryRead(id);
+  });
+
+  const handleReplyInquiry = props.handleReplyInquiry || (async (id: string, msg: string, role: 'host' | 'guest') => {
+    const res = await replyInquiry(id, msg, role);
+    if (res.success) {
+      showToast(tPan.toasts.replySent);
+    } else {
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
+    }
+  });
+
+  const handleManualSave = props.handleManualSave || (async () => {
+    const ok = await saveHostProfile(hostProfile);
+    if (ok) {
+      showToast(textos.notificaciones.datosSincronizados);
+    } else {
+      showToast(textos.notificaciones.errorGuardar);
+    }
+  });
 
   // Modal states
   const [houseModalOpen, setHouseModalOpen] = useState(false);
@@ -130,6 +252,27 @@ export function DashboardView({
 
   const [storyModalOpen, setStoryModalOpen] = useState(false);
   const [editingStory, setEditingStory] = useState<BlogPost | null>(null);
+
+  // Room Calendar Modal state
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarModalRoom, setCalendarModalRoom] = useState<Room | null>(null);
+  const [calendarModalHouse, setCalendarModalHouse] = useState<House | null>(null);
+
+  const pastBookings = ctxPastBookings || [];
+
+  const handleOpenRoomCalendar = (room: Room, house: House) => {
+    setCalendarModalRoom(room);
+    setCalendarModalHouse(house);
+    setCalendarModalOpen(true);
+  };
+
+  const handleUpdateBlockedDates = async (houseId: string, roomId: string, blockedDates: string[]) => {
+    const res = await updateRoomBlockedDates(houseId, roomId, blockedDates);
+    if (res.success && calendarModalRoom && calendarModalRoom.id === roomId) {
+      setCalendarModalRoom(prev => prev ? { ...prev, blockedDates } : null);
+    }
+    return res;
+  };
 
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -167,6 +310,13 @@ export function DashboardView({
 
   const totalAvailableRooms = allRoomsList.filter(item => item.room.available).length;
   const totalOccupiedRooms = allRoomsList.filter(item => !item.room.available).length;
+  const totalBlockedDatesAcrossRooms = useMemo(() => {
+    let count = 0;
+    allRoomsList.forEach(({ room }) => {
+      count += (room.blockedDates || []).length;
+    });
+    return count;
+  }, [allRoomsList]);
 
   // Filtered lists
   const filteredHouses = useMemo(() => {
@@ -228,7 +378,7 @@ export function DashboardView({
       title: house.name,
       warningNote:
         roomsCount > 0
-          ? `Nota: Este alojamiento cuenta con ${roomsCount} habitación(es) vinculada(s). Al eliminarlo, también se darán de baja.`
+          ? tPan.toasts.deleteHouseWarning.replace('{count}', String(roomsCount))
           : undefined
     });
     setDeleteModalOpen(true);
@@ -265,7 +415,7 @@ export function DashboardView({
       available: !targetRoom.available
     };
     onSaveRoom(houseId, updated, true, houseId);
-    showToast(`Habitación marcada como ${updated.available ? tHab.estadoDisponible : tHab.estadoOcupada}.`);
+    showToast(tPan.toasts.roomStatusChanged.replace('{status}', updated.available ? tHab.estadoDisponible : tHab.estadoOcupada));
   };
 
   // Gestión de historias
@@ -371,27 +521,28 @@ export function DashboardView({
           <div 
             className="absolute top-1.5 bottom-1.5 bg-[#3F434D] rounded-full transition-transform duration-300 ease-out shadow-md"
             style={{
-              width: 'calc(25% - 3px)',
+              width: 'calc(20% - 3px)',
               left: '6px',
               transform: 
                 (dashActiveTab === 'casas' || dashActiveTab === 'listings' || dashActiveTab === 'habitaciones') ? 'translateX(0%)' :
-                (dashActiveTab === 'historias' || dashActiveTab === 'stories') ? 'translateX(100%)' : 
-                (dashActiveTab === 'inquiries') ? 'translateX(200%)' :
-                'translateX(300%)'
+                (dashActiveTab === 'calendario' || dashActiveTab === 'calendar') ? 'translateX(100%)' :
+                (dashActiveTab === 'historias' || dashActiveTab === 'stories') ? 'translateX(200%)' : 
+                (dashActiveTab === 'inquiries') ? 'translateX(300%)' :
+                'translateX(400%)'
             }}
           />
 
           {/* TAB 1: Alojamientos */}
           <button
             onClick={() => setDashActiveTab('casas')}
-            className={`relative z-10 w-1/4 flex items-center justify-center gap-2 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+            className={`relative z-10 w-1/5 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
               dashActiveTab === 'casas' || dashActiveTab === 'listings' || dashActiveTab === 'habitaciones'
                 ? 'text-white'
                 : 'text-[#6E727C] hover:text-[#3F434D]'
             }`}
           >
             <Home className="h-4 w-4" />
-            <span className="hidden sm:inline">Alojamientos</span>
+            <span className="hidden sm:inline">{tPan.pestanas.casas}</span>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors ${
               dashActiveTab === 'casas' || dashActiveTab === 'listings' || dashActiveTab === 'habitaciones'
                 ? 'bg-white/20 text-white' : 'bg-[#FBF7EC] text-[#6E727C] group-hover:bg-[#F5EFE0]'
@@ -400,10 +551,31 @@ export function DashboardView({
             </span>
           </button>
 
-          {/* TAB 2: Historias */}
+          {/* TAB 2: Calendario */}
+          <button
+            onClick={() => setDashActiveTab('calendario')}
+            className={`relative z-10 w-1/5 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+              dashActiveTab === 'calendario' || dashActiveTab === 'calendar'
+                ? 'text-white'
+                : 'text-[#6E727C] hover:text-[#3F434D]'
+            }`}
+          >
+            <CalendarIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">{tPan.pestanas.calendario || 'Calendario'}</span>
+            {totalBlockedDatesAcrossRooms > 0 && (
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold transition-colors ${
+                dashActiveTab === 'calendario' || dashActiveTab === 'calendar'
+                  ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700'
+              }`}>
+                {totalBlockedDatesAcrossRooms}
+              </span>
+            )}
+          </button>
+
+          {/* TAB 3: Historias */}
           <button
             onClick={() => setDashActiveTab('historias')}
-            className={`relative z-10 w-1/4 flex items-center justify-center gap-2 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+            className={`relative z-10 w-1/5 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
               dashActiveTab === 'historias' || dashActiveTab === 'stories'
                 ? 'text-white'
                 : 'text-[#6E727C] hover:text-[#3F434D]'
@@ -419,10 +591,10 @@ export function DashboardView({
             </span>
           </button>
 
-          {/* TAB 3: Consultas */}
+          {/* TAB 4: Consultas */}
           <button
             onClick={() => setDashActiveTab('inquiries')}
-            className={`relative z-10 w-1/4 flex items-center justify-center gap-2 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+            className={`relative z-10 w-1/5 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
               dashActiveTab === 'inquiries'
                 ? 'text-white'
                 : 'text-[#6E727C] hover:text-[#3F434D]'
@@ -452,10 +624,10 @@ export function DashboardView({
             )}
           </button>
 
-          {/* TAB 4: Perfil de Anfitriona */}
+          {/* TAB 5: Perfil de Anfitriona */}
           <button
             onClick={() => setDashActiveTab('settings')}
-            className={`relative z-10 w-1/4 flex items-center justify-center gap-2 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
+            className={`relative z-10 w-1/5 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-colors duration-300 group ${
               dashActiveTab === 'settings'
                 ? 'text-white'
                 : 'text-[#6E727C] hover:text-[#3F434D]'
@@ -485,6 +657,22 @@ export function DashboardView({
           handleOpenCreateRoom={handleOpenCreateRoom} filteredRooms={filteredRooms}
           handleToggleRoomAvailability={handleToggleRoomAvailability}
           handleOpenEditRoom={handleOpenEditRoom} handleTriggerDeleteRoom={handleTriggerDeleteRoom}
+          handleOpenRoomCalendar={handleOpenRoomCalendar}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN 2: CALENDARIO DE DISPONIBILIDAD Y BLOQUEO DE FECHAS               */}
+      {/* ========================================================================= */}
+      {(dashActiveTab === 'calendario' || dashActiveTab === 'calendar') && (
+        <CalendarTab
+          houses={houses}
+          roomsByHouse={roomsByHouse}
+          selectedHouseId={selectedHouseId}
+          onUpdateBlockedDates={handleUpdateBlockedDates}
+          pastBookings={pastBookings}
+          showToast={showToast}
+          handleNavigate={handleNavigate}
         />
       )}
 
@@ -586,6 +774,25 @@ export function DashboardView({
           setDeleteTarget(null);
         }}
       />
+
+      {/* Modal de Calendario de Habitación */}
+      {calendarModalHouse && calendarModalRoom && (
+        <RoomCalendarModal
+          isOpen={calendarModalOpen}
+          onClose={() => {
+            setCalendarModalOpen(false);
+            setCalendarModalRoom(null);
+            setCalendarModalHouse(null);
+          }}
+          house={calendarModalHouse}
+          room={calendarModalRoom}
+          allRooms={roomsByHouse[calendarModalHouse.id] || []}
+          onSwitchRoom={(newRoom) => setCalendarModalRoom(newRoom)}
+          onSaveBlockedDates={handleUpdateBlockedDates}
+          pastBookings={pastBookings}
+          showToast={showToast}
+        />
+      )}
     </div>
   );
 }

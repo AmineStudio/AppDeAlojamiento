@@ -21,7 +21,7 @@ export function HouseModal({ isOpen, onClose, onSave, initialHouse }: HouseModal
   const [description, setDescription] = useState('');
   const [pricePerNight, setPricePerNight] = useState<number>(90);
   const [guests, setGuests] = useState<number>(6);
-  const [beds, setBeds] = useState('3 Habitaciones · 6 Camas');
+  const [beds, setBeds] = useState('3 Bedrooms · 6 Beds');
   const [tag, setTag] = useState(t.etiquetasPredefinidas[0]);
   const [features, setFeatures] = useState<string[]>([]);
   const [customFeature, setCustomFeature] = useState('');
@@ -35,7 +35,7 @@ export function HouseModal({ isOpen, onClose, onSave, initialHouse }: HouseModal
       setDescription(initialHouse.description);
       setPricePerNight(initialHouse.pricePerNight || 90);
       setGuests(initialHouse.guests || 6);
-      setBeds(initialHouse.beds || '3 Habitaciones');
+      setBeds(initialHouse.beds || '3 Bedrooms');
       setTag(initialHouse.tag || t.etiquetasPredefinidas[0]);
       setFeatures(initialHouse.features || []);
       setImages(initialHouse.images || []);
@@ -45,7 +45,7 @@ export function HouseModal({ isOpen, onClose, onSave, initialHouse }: HouseModal
       setDescription('');
       setPricePerNight(95);
       setGuests(6);
-      setBeds('3 Habitaciones · 6 Camas');
+      setBeds('3 Bedrooms · 6 Beds');
       setTag(t.etiquetasPredefinidas[0]);
       setFeatures(t.comodidadesSugeridas.slice(0, 3));
       setImages([]);
@@ -75,19 +75,19 @@ export function HouseModal({ isOpen, onClose, onSave, initialHouse }: HouseModal
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Por favor indica el nombre del alojamiento.');
+      setError(t.errores.nombre);
       return;
     }
     if (!location.trim()) {
-      setError('Por favor indica la ubicación.');
+      setError(t.errores.ubicacion);
       return;
     }
     if (!description.trim()) {
-      setError('Por favor escribe una descripción.');
+      setError(t.errores.descripcion);
       return;
     }
     if (images.length === 0) {
-      setError('Por favor añade al menos una foto para este alojamiento (arrastrándola o pegando el enlace).');
+      setError(t.errores.fotos);
       return;
     }
 
@@ -108,12 +108,12 @@ export function HouseModal({ isOpen, onClose, onSave, initialHouse }: HouseModal
       pricePerNight: Number(pricePerNight) || 80,
       rating: initialHouse?.rating || 5.0,
       reviewCount: initialHouse?.reviewCount || 0,
-      beds: beds.trim() || '3 Habitaciones',
+      beds: beds.trim() || '3 Bedrooms',
       guests: Number(guests) || 4,
       tag: tag.trim(),
       tagClass: 'coral',
       images,
-      features: features.length > 0 ? features : ['Wifi de alta velocidad']
+      features: features.length > 0 ? features : [t.comodidadesSugeridas[0]]
     };
 
     onSave(houseData, isEdit);

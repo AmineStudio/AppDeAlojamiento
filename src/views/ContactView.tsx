@@ -1,51 +1,109 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { House, HostProfile } from '../types';
+import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import textos from '../content/textos.json';
 
 interface ContactViewProps {
-  houses: House[];
-  hostProfile: HostProfile;
-  contactName: string;
-  setContactName: (name: string) => void;
-  contactEmail: string;
-  setContactEmail: (email: string) => void;
-  contactHouseId: string;
-  setContactHouseId: (id: string) => void;
-  contactSubject: string;
-  setContactSubject: (subject: string) => void;
-  contactMessage: string;
-  setContactMessage: (message: string) => void;
-  handleSendInquiry: () => void;
+  houses?: House[];
+  hostProfile?: HostProfile;
+  contactName?: string;
+  setContactName?: (name: string) => void;
+  contactEmail?: string;
+  setContactEmail?: (email: string) => void;
+  contactHouseId?: string;
+  setContactHouseId?: (id: string) => void;
+  contactSubject?: string;
+  setContactSubject?: (subject: string) => void;
+  contactMessage?: string;
+  setContactMessage?: (message: string) => void;
+  handleSendInquiry?: () => void;
 }
 
-export function ContactView({
-  houses,
-  hostProfile,
-  contactName,
-  setContactName,
-  contactEmail,
-  setContactEmail,
-  contactHouseId,
-  setContactHouseId,
-  contactSubject,
-  setContactSubject,
-  contactMessage,
-  setContactMessage,
-  handleSendInquiry
-}: ContactViewProps) {
+export function ContactView(props: ContactViewProps) {
+  const { houses: ctxHouses, hostProfile: ctxHostProfile, sendInquiry } = useData();
+  const { user, triggerLoginModal } = useAuth();
+  const { showToast } = useToast();
+  const tCont = textos.contact;
+
+  const houses = props.houses || ctxHouses;
+  const hostProfile = props.hostProfile || ctxHostProfile;
+
+  const [localName, setLocalName] = useState(user ? user.name : '');
+  const [localEmail, setLocalEmail] = useState(user ? user.email : '');
+  const [localHouseId, setLocalHouseId] = useState(houses[0]?.id || '');
+  const [localSubject, setLocalSubject] = useState('');
+  const [localMessage, setLocalMessage] = useState('');
+
+  useEffect(() => {
+    if (!localHouseId && houses.length > 0) {
+      setLocalHouseId(houses[0].id);
+    }
+  }, [houses, localHouseId]);
+
+  const name = props.contactName !== undefined ? props.contactName : localName;
+  const setName = props.setContactName || setLocalName;
+  const email = props.contactEmail !== undefined ? props.contactEmail : localEmail;
+  const setEmail = props.setContactEmail || setLocalEmail;
+  const houseId = props.contactHouseId !== undefined ? props.contactHouseId : localHouseId;
+  const setHouseId = props.setContactHouseId || setLocalHouseId;
+  const subject = props.contactSubject !== undefined ? props.contactSubject : localSubject;
+  const setSubject = props.setContactSubject || setLocalSubject;
+  const message = props.contactMessage !== undefined ? props.contactMessage : localMessage;
+  const setMessage = props.setContactMessage || setLocalMessage;
+
+  const handleSubmit = props.handleSendInquiry || (async () => {
+    const finalEmail = email.trim() || (user ? user.email : '');
+    const finalName = name.trim() || (user ? user.name : '');
+
+    if (!finalEmail || !finalName || !message.trim()) {
+      showToast(tCont.validationError);
+      return;
+    }
+
+    if (!user) {
+      showToast(tCont.loginError);
+      triggerLoginModal('signin');
+      return;
+    }
+
+    const selectedTargetHouse = houses.find(h => h.id === houseId) || houses[0];
+    const res = await sendInquiry(
+      finalName,
+      finalEmail,
+      selectedTargetHouse?.name || 'Stay',
+      subject.trim(),
+      message.trim()
+    );
+
+    if (res.success) {
+      setSubject('');
+      setMessage('');
+      showToast(tCont.successToast.replace('{name}', hostProfile.name));
+    } else {
+      showToast(tCont.errorToast + (res.error || 'Error'));
+    }
+  });
+
   return (
     <div className="animate-fade-in py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
         
         {/* Host bio & intro */}
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">Direct Communication</span>
-          <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">Ask {hostProfile.name}</h1>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">
+            {tCont.badge}
+          </span>
+          <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">
+            {tCont.heading.replace('{name}', hostProfile.name)}
+          </h1>
           <p className="text-sm font-light text-[#6E727C] leading-relaxed mt-4 mb-8">
-            Have inquiries about property availability, long-term nomad relocation discounts, or the neighborhood guidelines in Las Palmas or Tafira? Drop a letter.
+            {tCont.subtitle}
           </p>
 
           <div className="flex gap-4 p-5 bg-[#F5EFE0] rounded-3xl border border-[rgba(63,67,77,0.06)] mb-6">
-            <div className="h-12 w-12 text-md rounded-full bg-[#A7AB5E] text-white flex items-center justify-center font-bold">
+            <div className="h-12 w-12 text-md rounded-full bg-[#A7AB5E] text-white flex items-center justify-center font-bold shrink-0">
               {hostProfile.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -65,38 +123,38 @@ export function ContactView({
 
         {/* Inquiry form block */}
         <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-8 shadow-xl">
-          <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">Send a message</h3>
-          <p className="text-xs text-[#6E727C] mb-6">We will notify {hostProfile.name} and they will get back to you shortly.</p>
+          <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">{tCont.cardTitle}</h3>
+          <p className="text-xs text-[#6E727C] mb-6">{tCont.cardSubtitle.replace('{name}', hostProfile.name)}</p>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Your name</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.nameLabel}</label>
                 <input 
                   type="text" 
-                  placeholder="John Doe" 
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder={tCont.namePlaceholder} 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Your email</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.emailLabel}</label>
                 <input 
                   type="email" 
-                  placeholder="john@example.com" 
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder={tCont.emailPlaceholder} 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Regarding Stay</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.stayLabel}</label>
               <select 
-                value={contactHouseId}
-                onChange={(e) => setContactHouseId(e.target.value)}
+                value={houseId}
+                onChange={(e) => setHouseId(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3.5 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
               >
                 {houses.map(h => (
@@ -106,31 +164,31 @@ export function ContactView({
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Subject</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.subjectLabel}</label>
               <input 
                 type="text" 
-                placeholder="Question about workspace availability" 
-                value={contactSubject}
-                onChange={(e) => setContactSubject(e.target.value)}
+                placeholder={tCont.subjectPlaceholder} 
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Message</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.messageLabel}</label>
               <textarea 
-                placeholder="Tell Mila what you're looking for..." 
-                value={contactMessage}
-                onChange={(e) => setContactMessage(e.target.value)}
+                placeholder={tCont.messagePlaceholder} 
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium min-h-[120px] resize-vertical"
               ></textarea>
             </div>
 
             <button 
-              onClick={handleSendInquiry}
-              className="w-full py-3.5 bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] rounded-full text-xs font-semibold uppercase tracking-widest shadow-sm hover:shadow"
+              onClick={handleSubmit}
+              className="w-full py-3.5 bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] rounded-full text-xs font-semibold uppercase tracking-widest shadow-sm hover:shadow transition-all"
             >
-              Send inquiry
+              {tCont.sendButton}
             </button>
           </div>
         </div>
