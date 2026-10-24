@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useBookingCalendar } from '../hooks/useBookingCalendar';
 import { reviewsService } from '../services';
+import textos from '../content/textos.json';
 
 interface DetailViewProps {
   handleNavigate?: (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard' | 'inbox') => void;
@@ -49,6 +50,7 @@ export function DetailView(props: DetailViewProps) {
   } = useData();
   const { user: ctxUser, triggerLoginModal } = useAuth();
   const { showToast: ctxShowToast } = useToast();
+  const tDet = textos.detail;
 
   const user = props.user !== undefined ? props.user : ctxUser;
   const showToast = props.showToast || ctxShowToast;
@@ -99,15 +101,15 @@ export function DetailView(props: DetailViewProps) {
 
   const handleAddReview = props.handleAddReview || (async (houseId: string, rating: number, comment: string) => {
     if (!user) {
-      showToast('Debes iniciar sesión para dejar una reseña.');
+      showToast(tDet.reviewLoginError);
       triggerLoginModal('signin');
       return;
     }
     const res = await addReview(houseId, user.name, rating, comment);
     if (res.success) {
-      showToast('✨ ¡Muchas gracias por tu reseña!');
+      showToast(tDet.reviewSuccess);
     } else {
-      showToast('Error al publicar la reseña: ' + (res.error || 'Error'));
+      showToast(tDet.reviewError + (res.error || 'Error'));
     }
   });
 
@@ -117,7 +119,7 @@ export function DetailView(props: DetailViewProps) {
       return;
     }
     if (user.role === 'host') {
-      showToast('Como anfitriona no puedes reservar tus propios alojamientos.');
+      showToast(tDet.hostSelfBookingError);
       return;
     }
     const days = getDaysCount();
@@ -128,11 +130,16 @@ export function DetailView(props: DetailViewProps) {
       checkOut: checkOutDate ? dateToKey(checkOutDate) : undefined
     });
     if (res.success) {
-      showToast(`🎉 ¡Solicitud enviada! Reserva registrada de ${days} noches en ${activeHouse.name}. Total: ${totalPrice}€`);
+      showToast(
+        tDet.bookingSuccess
+          .replace('{days}', String(days))
+          .replace('{houseName}', activeHouse.name)
+          .replace('{total}', String(totalPrice))
+      );
       setCheckInDate(null);
       setCheckOutDate(null);
     } else {
-      showToast('Error al registrar la reserva: ' + (res.error || 'Error'));
+      showToast(tDet.bookingError + (res.error || 'Error'));
     }
   });
 
@@ -153,7 +160,7 @@ export function DetailView(props: DetailViewProps) {
   if (!activeHouse) {
     return (
       <div className="py-24 text-center">
-        <p className="text-sm text-[#6E727C]">Cargando información del alojamiento...</p>
+        <p className="text-sm text-[#6E727C]">{tDet.loadingInfo}</p>
       </div>
     );
   }
@@ -167,7 +174,7 @@ export function DetailView(props: DetailViewProps) {
 
   const submitReview = () => {
     if (!newReviewText.trim()) {
-      showToast('Por favor escribe un comentario para tu reseña.');
+      showToast(tDet.reviewEmptyError);
       return;
     }
     handleAddReview(activeHouse.id, newReviewRating, newReviewText);
@@ -184,7 +191,7 @@ export function DetailView(props: DetailViewProps) {
           onClick={onNavigateHome}
           className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] mb-8"
         >
-          ← Volver al catálogo
+          {tDet.backCatalog}
         </button>
 
         {/* Title & Stats */}
@@ -194,13 +201,13 @@ export function DetailView(props: DetailViewProps) {
             <h1 className="font-display font-light text-3xl sm:text-5xl text-[#3F434D] tracking-tight">{activeHouse.name}</h1>
             
             <div className="flex items-center gap-4 flex-wrap text-xs text-[#6E727C] font-medium mt-3 border-t border-[rgba(63,67,77,0.06)] pt-3">
-              <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> Hasta {activeHouse.guests} huéspedes</span>
+              <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> {tDet.maxGuests.replace('{count}', String(activeHouse.guests))}</span>
               <span>•</span>
               <span><FileText className="h-3.5 w-3.5 inline mr-1" /> {activeHouse.beds}</span>
               <span>•</span>
               <span className="flex items-center gap-1">
                 <Star className="h-3.5 w-3.5 text-[#E6BE7A] fill-[#E6BE7A]" /> 
-                <strong>{activeHouse.rating}</strong> ({activeHouse.reviewCount} opiniones)
+                <strong>{activeHouse.rating}</strong> {tDet.reviewsCount.replace('{count}', String(activeHouse.reviewCount))}
               </span>
             </div>
           </div>
@@ -211,11 +218,11 @@ export function DetailView(props: DetailViewProps) {
                 if (navigator.clipboard) {
                   navigator.clipboard.writeText(window.location.href);
                 }
-                showToast('↗️ ¡Enlace copiado al portapapeles!');
+                showToast(tDet.shareToast);
               }} 
               className="py-2.5 px-6 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] rounded-full text-xs font-semibold uppercase tracking-wider text-[#3F434D] transition-all"
             >
-              ↗️ Compartir
+              {tDet.share}
             </button>
           </div>
         </div>
@@ -237,7 +244,7 @@ export function DetailView(props: DetailViewProps) {
 
             {/* House Bio Description */}
             <div className="border-b border-[rgba(63,67,77,0.08)] pb-10 mb-10">
-              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-4">Sobre el alojamiento</h3>
+              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-4">{tDet.aboutStay}</h3>
               <p className="text-sm font-light leading-relaxed text-[#6E727C] whitespace-pre-line">
                 {activeHouse.description}
               </p>
@@ -245,7 +252,7 @@ export function DetailView(props: DetailViewProps) {
 
             {/* Amenities/Features section */}
             <div className="border-b border-[rgba(63,67,77,0.08)] pb-10 mb-10">
-              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-6">Comodidades y Servicios</h3>
+              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-6">{tDet.amenities}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activeHouse.features.map((feat, idx) => (
                   <div key={idx} className="flex items-center gap-3 bg-white border border-[rgba(63,67,77,0.06)] rounded-2xl p-4">
@@ -258,7 +265,7 @@ export function DetailView(props: DetailViewProps) {
 
             {/* Room options & Pricing */}
             <div className="border-b border-[rgba(63,67,77,0.08)] pb-10 mb-10">
-              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-6">Elige tu Habitación</h3>
+              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-6">{tDet.chooseRoom}</h3>
               <div className="space-y-4">
                 {(roomsByHouse[activeHouse.id] || []).map((r) => (
                   <div 
@@ -282,17 +289,17 @@ export function DetailView(props: DetailViewProps) {
                       <div className="flex items-center gap-4 self-end sm:self-auto shrink-0">
                         <div className="text-right">
                           <span className="font-display text-lg font-bold text-[#3F434D] block">{r.price}€</span>
-                          <span className="text-[9px] uppercase tracking-wider font-bold text-[#6E727C]">/ noche</span>
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-[#6E727C]">{tDet.perNight}</span>
                         </div>
                         <button 
                           onClick={() => {
                             setSelectedRoomId(r.id);
-                            showToast(`✨ Habitación seleccionada: ${r.name}`);
+                            showToast(`${tDet.selectedRoomToast}${r.name}`);
                           }}
                           disabled={!r.available}
                           className={`py-2 px-5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${r.available ? (selectedRoomId === r.id ? 'bg-[#3D7A95] text-white' : 'bg-[#A7AB5E] text-white hover:bg-[#888B47]') : 'bg-gray-200 text-[#6E727C] cursor-not-allowed'}`}
                         >
-                          {r.available ? (selectedRoomId === r.id ? 'Seleccionada' : 'Seleccionar') : 'No disponible'}
+                          {r.available ? (selectedRoomId === r.id ? tDet.selected : tDet.select) : tDet.unavailable}
                         </button>
                       </div>
                     </div>
@@ -303,19 +310,19 @@ export function DetailView(props: DetailViewProps) {
 
             {/* Reviews Section */}
             <div>
-              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-6">Opiniones de Huéspedes</h3>
+              <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-6">{tDet.guestReviews}</h3>
               
               {/* Reviews breakdown widget */}
               <div className="bg-white border border-[rgba(63,67,77,0.06)] p-6 rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-8">
                 <div className="text-center md:border-r border-[rgba(63,67,77,0.08)] py-4">
                   <h4 className="font-display text-6xl font-light text-[#3D7A95] leading-none mb-2">{activeHouse.rating}</h4>
                   <div className="flex justify-center text-[#E6BE7A] font-bold text-md mb-2">★★★★★</div>
-                  <span className="text-xs uppercase font-bold tracking-widest text-[#6E727C]">{activeHouse.reviewCount} opiniones verificadas</span>
+                  <span className="text-xs uppercase font-bold tracking-widest text-[#6E727C]">{activeHouse.reviewCount} {tDet.verifiedReviews}</span>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[#6E727C]">Limpieza</span>
+                    <span className="text-[#6E727C]">{tDet.categories.cleanliness}</span>
                     <div className="flex items-center gap-3 w-3/5">
                       <div className="h-1.5 w-full bg-[#F5EFE0] rounded-full overflow-hidden">
                         <div className="h-full bg-[#A7AB5E]" style={{ width: '96%' }}></div>
@@ -324,7 +331,7 @@ export function DetailView(props: DetailViewProps) {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[#6E727C]">Ubicación</span>
+                    <span className="text-[#6E727C]">{tDet.categories.location}</span>
                     <div className="flex items-center gap-3 w-3/5">
                       <div className="h-1.5 w-full bg-[#F5EFE0] rounded-full overflow-hidden">
                         <div className="h-full bg-[#A7AB5E]" style={{ width: '98%' }}></div>
@@ -333,7 +340,7 @@ export function DetailView(props: DetailViewProps) {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[#6E727C]">Relación calidad/precio</span>
+                    <span className="text-[#6E727C]">{tDet.categories.value}</span>
                     <div className="flex items-center gap-3 w-3/5">
                       <div className="h-1.5 w-full bg-[#F5EFE0] rounded-full overflow-hidden">
                         <div className="h-full bg-[#A7AB5E]" style={{ width: '94%' }}></div>
@@ -342,7 +349,7 @@ export function DetailView(props: DetailViewProps) {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[#6E727C]">Atención y comunicación</span>
+                    <span className="text-[#6E727C]">{tDet.categories.communication}</span>
                     <div className="flex items-center gap-3 w-3/5">
                       <div className="h-1.5 w-full bg-[#F5EFE0] rounded-full overflow-hidden">
                         <div className="h-full bg-[#A7AB5E]" style={{ width: '98%' }}></div>
@@ -376,9 +383,9 @@ export function DetailView(props: DetailViewProps) {
               <div id="reviewFormWrap" className="mt-8">
                 {canReview ? (
                   <div className="bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] rounded-3xl p-6">
-                    <h4 className="font-display font-medium text-lg text-[#3F434D] mb-4">Escribir una Reseña</h4>
+                    <h4 className="font-display font-medium text-lg text-[#3F434D] mb-4">{tDet.writeReview}</h4>
                     <div className="mb-4">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-2">Puntuación</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-2">{tDet.rating}</label>
                       <div className="flex gap-2">
                         {[1, 2, 3, 4, 5].map(star => (
                           <button 
@@ -392,11 +399,11 @@ export function DetailView(props: DetailViewProps) {
                       </div>
                     </div>
                     <div className="mb-4">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-2">Tu Experiencia</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-2">{tDet.yourExperience}</label>
                       <textarea
                         value={newReviewText}
                         onChange={(e) => setNewReviewText(e.target.value)}
-                        placeholder="Cuéntanos cómo fue tu estancia..."
+                        placeholder={tDet.reviewPlaceholder}
                         className="w-full bg-white border border-[rgba(63,67,77,0.1)] rounded-2xl p-4 text-sm focus:outline-none focus:border-[#3D7A95] min-h-[100px] resize-none"
                       ></textarea>
                     </div>
@@ -404,7 +411,7 @@ export function DetailView(props: DetailViewProps) {
                       onClick={submitReview}
                       className="py-2.5 px-6 bg-[#3F434D] text-[#FBF7EC] hover:bg-[#1E2024] rounded-full text-xs font-semibold uppercase tracking-wider transition-colors"
                     >
-                      Publicar Reseña
+                      {tDet.publishReview}
                     </button>
                   </div>
                 ) : null}
@@ -418,14 +425,14 @@ export function DetailView(props: DetailViewProps) {
               <div className="flex flex-col gap-1 mb-6">
                 <div className="flex items-baseline gap-1.5">
                   <span className="font-display font-light text-4xl text-[#3F434D]">{currentPrice}€</span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-[#6E727C]">/ noche</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[#6E727C]">{tDet.perNight}</span>
                 </div>
                 {selectedRoom && <span className="text-[10px] font-bold text-[#3D7A95] uppercase tracking-wider">{selectedRoom.name}</span>}
               </div>
 
               {/* Custom Interactive Calendar Widget Input */}
               <div className="relative mb-4">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-2">Fechas Seleccionadas</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-2">{tDet.selectedDates}</label>
                 <div 
                   onClick={() => setCalendarOpen(!calendarOpen)}
                   className={`flex justify-between items-center bg-[#F5EFE0] py-3.5 px-4 rounded-2xl border transition-all cursor-pointer ${calendarOpen ? 'border-[#3D7A95] shadow-inner' : 'border-[rgba(63,67,77,0.08)]'}`}
@@ -433,9 +440,9 @@ export function DetailView(props: DetailViewProps) {
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="h-4 w-4 text-[#3D7A95]" />
                     <span className="text-xs font-medium text-[#3F434D]">
-                      {checkInDate ? checkInDate.toLocaleDateString('es-ES', {month: 'short', day: 'numeric'}) : 'Entrada'}
+                      {checkInDate ? checkInDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : tDet.checkIn}
                       {' → '}
-                      {checkOutDate ? checkOutDate.toLocaleDateString('es-ES', {month: 'short', day: 'numeric'}) : 'Salida'}
+                      {checkOutDate ? checkOutDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : tDet.checkOut}
                     </span>
                   </div>
                   <span className="text-md text-[#6E727C]">▾</span>
@@ -449,10 +456,10 @@ export function DetailView(props: DetailViewProps) {
                       {/* Months grid loops dynamically */}
                       {Array.from({ length: 2 }).map((_, idx) => {
                         const targetMonth = new Date(currentCalMonth.getFullYear(), currentCalMonth.getMonth() + idx, 1);
-                        const monthName = targetMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                        const monthName = targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
                         const firstDay = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
                         const lastDay = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
-                        const startWeekday = (firstDay.getDay() + 6) % 7; // Lunes=0
+                        const startWeekday = (firstDay.getDay() + 6) % 7; // Monday=0
                         const daysInMonth = lastDay.getDate();
 
                         return (
@@ -462,7 +469,7 @@ export function DetailView(props: DetailViewProps) {
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); setCurrentCalMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)); }}
                                   className="h-7 w-7 rounded-full hover:bg-[#F5EFE0] flex items-center justify-center text-xs"
-                                  title="Mes anterior"
+                                  title="Previous month"
                                 >
                                   ‹
                                 </button>
@@ -472,7 +479,7 @@ export function DetailView(props: DetailViewProps) {
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); setCurrentCalMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)); }}
                                   className="h-7 w-7 rounded-full hover:bg-[#F5EFE0] flex items-center justify-center text-xs"
-                                  title="Mes siguiente"
+                                  title="Next month"
                                 >
                                   ›
                                 </button>
@@ -480,7 +487,7 @@ export function DetailView(props: DetailViewProps) {
                             </div>
 
                             <div className="grid grid-cols-7 gap-1 text-center">
-                              {['L','M','X','J','V','S','D'].map((d, dIdx) => (
+                              {tDet.daysOfWeek.map((d, dIdx) => (
                                 <div key={`${d}-${dIdx}`} className="text-[9px] font-bold text-[#6E727C] py-1">{d}</div>
                               ))}
                               {Array.from({ length: startWeekday }).map((_, i) => (
@@ -532,13 +539,13 @@ export function DetailView(props: DetailViewProps) {
                         onClick={(e) => { e.stopPropagation(); setCheckInDate(null); setCheckOutDate(null); }}
                         className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#888B47]"
                       >
-                        Limpiar fechas
+                        {tDet.clearDates}
                       </button>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setCalendarOpen(false); }}
                         className="px-4 py-1.5 bg-[#3F434D] text-[#FBF7EC] rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-[#1E2024]"
                       >
-                        Aplicar
+                        {tDet.applyDates}
                       </button>
                     </div>
                   </div>
@@ -546,16 +553,16 @@ export function DetailView(props: DetailViewProps) {
               </div>
 
               <div className="field-full border border-[rgba(63,67,77,0.08)] bg-[#F5EFE0] rounded-2xl p-3.5 mb-6">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1">Huéspedes</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1">{tDet.guests}</label>
                 <select 
                   value={guestCount} 
                   onChange={(e) => setGuestCount(Number(e.target.value))}
                   className="bg-transparent font-medium text-xs text-[#3F434D] w-full outline-none"
                 >
-                  <option value={1}>1 huésped</option>
-                  <option value={2}>2 huéspedes</option>
-                  <option value={3}>3 huéspedes</option>
-                  <option value={4}>4 huéspedes</option>
+                  <option value={1}>1 {tDet.guestSingular}</option>
+                  <option value={2}>2 {tDet.guestPlural}</option>
+                  <option value={3}>3 {tDet.guestPlural}</option>
+                  <option value={4}>4 {tDet.guestPlural}</option>
                 </select>
               </div>
 
@@ -564,18 +571,20 @@ export function DetailView(props: DetailViewProps) {
                 disabled={!checkInDate || !checkOutDate}
                 className="w-full py-4 bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] disabled:bg-gray-200 disabled:text-[#6E727C] disabled:cursor-not-allowed rounded-full text-xs font-semibold uppercase tracking-widest shadow-md hover:shadow-lg transition-all"
               >
-                {checkInDate && checkOutDate ? `Reservar · ${calculatedSubtotal}€` : 'Elige fechas para continuar'}
+                {checkInDate && checkOutDate 
+                  ? tDet.bookWithTotal.replace('{total}', String(calculatedSubtotal)) 
+                  : tDet.chooseDatesPrompt}
               </button>
 
               {/* Calculated Prices Block */}
               {checkInDate && checkOutDate && (
                 <div className="border-t border-dashed border-[rgba(63,67,77,0.1)] pt-6 mt-6 text-xs text-[#6E727C] space-y-3">
                   <div className="flex justify-between">
-                    <span>{currentPrice}€ × {getDaysCount()} noches</span>
+                    <span>{currentPrice}€ × {getDaysCount()} {tDet.nights}</span>
                     <span className="font-semibold text-[#3F434D]">{calculatedSubtotal}€</span>
                   </div>
                   <div className="border-t border-[rgba(63,67,77,0.08)] pt-3 flex justify-between text-sm font-bold text-[#3F434D]">
-                    <span>Total de la estancia</span>
+                    <span>{tDet.totalStay}</span>
                     <span>{calculatedSubtotal}€</span>
                   </div>
                 </div>

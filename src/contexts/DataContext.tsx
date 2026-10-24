@@ -376,7 +376,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addHousePhoto = useCallback(async (houseId: string, photoUrl: string) => {
     const targetHouse = houses.find(h => h.id === houseId);
-    if (!targetHouse) return { success: false, error: 'Alojamiento no encontrado' };
+    if (!targetHouse) return { success: false, error: 'Stay not found' };
 
     const newImages = [...targetHouse.images, photoUrl];
     setHouses(prev => prev.map(h => h.id === houseId ? { ...h, images: newImages } : h));
@@ -391,7 +391,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const removeHousePhoto = useCallback(async (houseId: string, index: number) => {
     const targetHouse = houses.find(h => h.id === houseId);
-    if (!targetHouse) return { success: false, error: 'Alojamiento no encontrado' };
+    if (!targetHouse) return { success: false, error: 'Stay not found' };
 
     const newImages = [...targetHouse.images];
     newImages.splice(index, 1);
@@ -408,7 +408,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addRoomPhoto = useCallback(async (houseId: string, roomId: string, photoUrl: string) => {
     const rooms = roomsByHouse[houseId] || [];
     const room = rooms.find(r => r.id === roomId);
-    if (!room) return { success: false, error: 'Habitación no encontrada' };
+    if (!room) return { success: false, error: 'Room not found' };
 
     const newImages = [...room.images, photoUrl];
     setRoomsByHouse(prev => ({
@@ -464,7 +464,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const replyInquiry = useCallback(async (inquiryId: string, replyMessage: string, senderRole: 'host' | 'guest') => {
     const inq = inquiries.find(i => i.id === inquiryId);
-    if (!inq) return { success: false, error: 'Consulta no encontrada' };
+    if (!inq) return { success: false, error: 'Inquiry not found' };
 
     try {
       await inquiriesService.replyInquiry(
@@ -482,7 +482,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const toggleInquiryRead = useCallback(async (inquiryId: string) => {
     const inq = inquiries.find(i => i.id === inquiryId);
-    if (!inq) return { success: false, error: 'Consulta no encontrada' };
+    if (!inq) return { success: false, error: 'Inquiry not found' };
 
     try {
       await inquiriesService.toggleReadState(inquiryId, inq.read);

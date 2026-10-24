@@ -6,6 +6,7 @@ import {
   calculateDaysCount, 
   isDateRangeBlocked 
 } from '../utils/booking.utils';
+import textos from '../content/textos.json';
 
 interface UseBookingCalendarOptions {
   houseId: string;
@@ -49,7 +50,7 @@ export function useBookingCalendar({ houseId, onBlockedDateSelected }: UseBookin
       } else {
         if (isDateRangeBlocked(checkInDate, date, bookedDates)) {
           if (onBlockedDateSelected) {
-            onBlockedDateSelected('⚠️ Las fechas seleccionadas contienen días no disponibles. Elige otro periodo.');
+            onBlockedDateSelected(textos.notificaciones.fechasBloqueadas);
           }
           setCheckInDate(date);
           setCheckOutDate(null);

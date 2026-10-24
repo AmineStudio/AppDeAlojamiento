@@ -21,6 +21,7 @@ const GuestInboxView = lazy(() => import('./views/GuestInboxView').then(m => ({ 
 import { useAuth } from './contexts/AuthContext';
 import { useData } from './contexts/DataContext';
 import { useToast } from './contexts/ToastContext';
+import textos from './content/textos.json';
 
 function PageLoading() {
   return (
@@ -56,7 +57,7 @@ export default function App() {
   // Notificación si se intentó acceder a una ruta protegida
   useEffect(() => {
     if (location.state?.needAuth) {
-      showToast('🔒 Inicia sesión para acceder a esta sección.');
+      showToast(textos.protectedRoute.needAuth);
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate, showToast]);
@@ -67,7 +68,7 @@ export default function App() {
       
       {loadFailed && (
         <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-[60] flex items-center gap-3 bg-red-600 text-white py-3 px-5 rounded-2xl shadow-xl max-w-sm">
-          <span className="text-sm font-medium">No se han podido cargar los datos de Firestore. Recarga la página.</span>
+          <span className="text-sm font-medium">{textos.app.loadFailed}</span>
         </div>
       )}
 
@@ -81,8 +82,8 @@ export default function App() {
             <div className="flex items-center gap-3.5">
               <div className="h-10 w-10 text-md rounded-full bg-white flex items-center justify-center shadow-sm">⭐</div>
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#3F434D]">¡Queremos saber tu opinión!</h4>
-                <p className="text-xs text-[#6E727C] mt-0.5">Cuéntanos cómo fue tu estancia en {activeHouse.name}.</p>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#3F434D]">{textos.bannerReview.title}</h4>
+                <p className="text-xs text-[#6E727C] mt-0.5">{textos.bannerReview.subtitle.replace('{houseName}', activeHouse.name)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -90,12 +91,12 @@ export default function App() {
                 onClick={() => navigate(`/alojamiento/${activeHouse.id}`)} 
                 className="py-2 px-5 bg-[#3F434D] text-[#FBF7EC] rounded-full text-xs font-semibold uppercase tracking-wider hover:bg-[#1E2024] transition-all"
               >
-                Escribir reseña
+                {textos.bannerReview.button}
               </button>
               <button 
                 onClick={() => setEligibleReviewPending(false)} 
                 className="h-8 w-8 hover:bg-[rgba(0,0,0,0.05)] rounded-full flex items-center justify-center text-xs text-[#6E727C]"
-                title="Cerrar aviso"
+                title={textos.bannerReview.close}
               >
                 ✕
               </button>

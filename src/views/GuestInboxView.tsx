@@ -4,6 +4,7 @@ import { MessageInquiry } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
+import textos from '../content/textos.json';
 
 interface GuestInboxViewProps {
   user?: { name: string; email: string; role: 'guest' | 'host' } | null;
@@ -15,6 +16,7 @@ export function GuestInboxView(props: GuestInboxViewProps) {
   const { user: ctxUser } = useAuth();
   const { inquiries: ctxInquiries, replyInquiry } = useData();
   const { showToast } = useToast();
+  const tInbox = textos.inbox;
 
   const user = props.user !== undefined ? props.user : ctxUser;
   const inquiries = props.inquiries || ctxInquiries;
@@ -25,7 +27,7 @@ export function GuestInboxView(props: GuestInboxViewProps) {
   if (!user) {
     return (
       <div className="py-24 text-center">
-        <p className="text-sm text-[#6E727C]">Inicia sesión para ver tus mensajes.</p>
+        <p className="text-sm text-[#6E727C]">{tInbox.loginPrompt}</p>
       </div>
     );
   }
@@ -41,9 +43,9 @@ export function GuestInboxView(props: GuestInboxViewProps) {
       } else {
         const res = await replyInquiry(activeInquiry.id, replyText, 'guest');
         if (res.success) {
-          showToast('✉️ Mensaje enviado con éxito.');
+          showToast(tInbox.replySuccess);
         } else {
-          showToast('Error al enviar mensaje: ' + (res.error || 'Error'));
+          showToast(tInbox.replyError + (res.error || 'Error'));
         }
       }
       setReplyText('');
@@ -54,15 +56,15 @@ export function GuestInboxView(props: GuestInboxViewProps) {
     <div className="animate-fade-in py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="font-display font-light text-3xl sm:text-4xl text-[#3F434D] tracking-tight">Mis Mensajes</h1>
-          <p className="text-sm font-medium text-[#6E727C] mt-2">Gestiona tus conversaciones con la anfitriona</p>
+          <h1 className="font-display font-light text-3xl sm:text-4xl text-[#3F434D] tracking-tight">{tInbox.title}</h1>
+          <p className="text-sm font-medium text-[#6E727C] mt-2">{tInbox.subtitle}</p>
         </div>
 
         {myInquiries.length === 0 ? (
           <div className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl p-12 text-center">
             <MessageSquare className="h-12 w-12 text-[#CFE4EC] mx-auto mb-4" />
-            <h3 className="font-display text-2xl text-[#3F434D] mb-2">Aún no tienes mensajes</h3>
-            <p className="text-sm text-[#6E727C]">Cuando envíes consultas o contactes con la anfitriona, aparecerán aquí.</p>
+            <h3 className="font-display text-2xl text-[#3F434D] mb-2">{tInbox.emptyTitle}</h3>
+            <p className="text-sm text-[#6E727C]">{tInbox.emptySubtitle}</p>
           </div>
         ) : (
           <div className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl overflow-hidden flex flex-col md:flex-row h-[600px] shadow-sm">
@@ -99,7 +101,7 @@ export function GuestInboxView(props: GuestInboxViewProps) {
                     {/* Mensaje original */}
                     <div className="flex flex-col items-end">
                       <div className="bg-[#3F434D] text-[#FBF7EC] rounded-2xl rounded-tr-none px-4 py-3 max-w-[80%] text-xs shadow-sm">
-                        <p className="font-semibold text-[10px] text-[#A7AB5E] mb-1">Tú (Consulta inicial)</p>
+                        <p className="font-semibold text-[10px] text-[#A7AB5E] mb-1">{tInbox.initialInquiryBadge}</p>
                         <p className="leading-relaxed">{activeInquiry.message}</p>
                         <span className="text-[9px] text-[#FBF7EC]/60 block text-right mt-1">{activeInquiry.date}</span>
                       </div>
@@ -119,7 +121,7 @@ export function GuestInboxView(props: GuestInboxViewProps) {
                           }`}
                         >
                           <p className={`font-semibold text-[10px] mb-1 ${msg.sender === 'guest' ? 'text-[#A7AB5E]' : 'text-[#3D7A95]'}`}>
-                            {msg.sender === 'guest' ? 'Tú' : 'Mila (Anfitriona)'}
+                            {msg.sender === 'guest' ? tInbox.you : tInbox.hostSender}
                           </p>
                           <p className="leading-relaxed">{msg.message}</p>
                           <span className={`text-[9px] block text-right mt-1 ${msg.sender === 'guest' ? 'text-[#FBF7EC]/60' : 'text-[#6E727C]'}`}>
@@ -134,7 +136,7 @@ export function GuestInboxView(props: GuestInboxViewProps) {
                   <div className="p-4 border-t border-[rgba(63,67,77,0.08)] bg-white flex gap-2">
                     <input 
                       type="text" 
-                      placeholder="Escribe tu respuesta a la anfitriona..."
+                      placeholder={tInbox.replyPlaceholder}
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
@@ -150,7 +152,7 @@ export function GuestInboxView(props: GuestInboxViewProps) {
                 </>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-[#6E727C]">
-                  Selecciona una conversación para leerla
+                  {tInbox.selectConversation}
                 </div>
               )}
             </div>

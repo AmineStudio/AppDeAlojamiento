@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BlogPost } from '../types';
 import { ArrowLeft } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
+import textos from '../content/textos.json';
 
 interface BlogViewProps {
   blogPosts?: BlogPost[];
@@ -11,6 +12,7 @@ export function BlogView(props: BlogViewProps) {
   const { blogPosts: ctxBlogPosts } = useData();
   const blogPosts = props.blogPosts || ctxBlogPosts;
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const tBlog = textos.blog;
 
   const selectedPost = blogPosts.find(p => p.id === selectedPostId);
 
@@ -22,7 +24,7 @@ export function BlogView(props: BlogViewProps) {
           className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#6E727C] hover:text-[#3D7A95] transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver a las historias
+          {tBlog.backButton}
         </button>
         
         <div className="mb-10 text-center">
@@ -37,7 +39,7 @@ export function BlogView(props: BlogViewProps) {
           </p>
           
           <div className="mt-8 flex justify-center items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-[#6E727C]">
-            <span>Por {selectedPost.author}</span>
+            <span>{tBlog.byAuthor.replace('{author}', selectedPost.author)}</span>
             <span>•</span>
             <span>{selectedPost.publishedDate}</span>
             <span>•</span>
@@ -61,10 +63,14 @@ export function BlogView(props: BlogViewProps) {
   return (
     <div className="animate-fade-in py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="text-center max-w-2xl mx-auto mb-16">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">Cultura y Consejos Locales</span>
-        <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">Historias de Mila</h1>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">
+          {tBlog.badge}
+        </span>
+        <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">
+          {tBlog.title}
+        </h1>
         <p className="text-sm text-[#6E727C] font-light mt-3 leading-relaxed">
-          Secretos de la isla, recomendaciones gastronómicas, rutas volcánicas y el pulso auténtico de Gran Canaria.
+          {tBlog.subtitle}
         </p>
       </div>
 
@@ -86,7 +92,7 @@ export function BlogView(props: BlogViewProps) {
                 <p className="text-xs font-light text-[#6E727C] leading-relaxed mb-6 line-clamp-3">{post.excerpt}</p>
               </div>
               <div className="border-t border-[rgba(63,67,77,0.06)] pt-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-[#6E727C]">
-                <span>Escrito por {post.author}</span>
+                <span>{tBlog.writtenBy.replace('{author}', post.author)}</span>
                 <span>{post.readTime}</span>
               </div>
             </div>

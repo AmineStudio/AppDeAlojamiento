@@ -10,6 +10,7 @@ import {
   signInWithPopup 
 } from 'firebase/auth';
 import { isAdminEmail } from '../config/admins';
+import textos from '../content/textos.json';
 
 interface LoginModalProps {
   loginModalOpen: boolean;
@@ -26,13 +27,14 @@ export function LoginModal({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const tAuth = textos.auth;
 
   if (!loginModalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      showToast('Por favor introduce una dirección de correo.');
+      showToast(tAuth.emailRequired);
       return;
     }
     
@@ -42,40 +44,40 @@ export function LoginModal({
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         if (!userCredential.user.emailVerified) {
           await sendEmailVerification(userCredential.user);
-          showToast('Por favor verifica tu correo. Hemos enviado un enlace de confirmación a tu bandeja de entrada.');
+          showToast(tAuth.verifyEmailToast);
           await signOut(auth);
         } else {
           setLoginModalOpen(false);
           if (isAdminEmail(userCredential.user.email)) {
-            showToast('¡Bienvenida de nuevo! ☀️ Abre el panel para gestionar tus alojamientos.');
+            showToast(tAuth.welcomeHostToast);
           } else {
-            showToast('¡Bienvenido! Explora los alojamientos disponibles y solicita tu estancia.');
+            showToast(tAuth.welcomeGuestToast);
           }
         }
       } else if (mode === 'register') {
         if (password.length < 6) {
-          showToast('La contraseña debe tener al menos 6 caracteres.');
+          showToast(tAuth.passwordLengthError);
           setLoading(false);
           return;
         }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await sendEmailVerification(userCredential.user);
         await signOut(auth);
-        showToast('¡Registro completado! Por favor revisa tu correo electrónico para verificar tu cuenta.');
+        showToast(tAuth.registeredSuccess);
         setMode('login');
       } else if (mode === 'reset') {
         await sendPasswordResetEmail(auth, email);
-        showToast('¡Enlace de recuperación enviado! Revisa tu bandeja de entrada.');
+        showToast(tAuth.resetSentSuccess);
         setMode('login');
       }
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        showToast('Correo electrónico o contraseña incorrectos.');
+        showToast(tAuth.invalidCredentials);
       } else if (err.code === 'auth/email-already-in-use') {
-        showToast('Ya existe una cuenta registrada con este correo.');
+        showToast(tAuth.emailInUse);
       } else {
-        showToast(err.message || 'Error en la autenticación.');
+        showToast(err.message || tAuth.authError);
       }
     } finally {
       setLoading(false);
@@ -88,16 +90,16 @@ export function LoginModal({
       const userCredential = await signInWithPopup(auth, provider);
       setLoginModalOpen(false);
       if (isAdminEmail(userCredential.user.email)) {
-        showToast('¡Bienvenida de nuevo! ☀️ Abre el panel para gestionar tus alojamientos.');
+        showToast(tAuth.welcomeHostToast);
       } else {
-        showToast('¡Bienvenido! Explora los alojamientos disponibles y solicita tu estancia.');
+        showToast(tAuth.welcomeGuestToast);
       }
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/popup-closed-by-user') {
-        console.log('Ventana de acceso con Google cerrada por el usuario.');
+        console.log('Google login window closed by user.');
       } else {
-        showToast(err.message || 'Error en la autenticación con Google.');
+        showToast(err.message || tAuth.googleAuthError);
       }
     }
   };
@@ -109,10 +111,10 @@ export function LoginModal({
           <>
             <div className="text-center mb-6">
               <h2 className="font-display font-light text-3xl text-[#3F434D]">
-                Acceso a <span className="italic font-medium text-[#A7AB5E]">Mila</span>
+                {tAuth.loginTitle} <span className="italic font-medium text-[#A7AB5E]">Mila</span>
               </h2>
               <p className="text-[#6E727C] mt-2 text-xs leading-relaxed">
-                Inicia sesión para reservar estancias o gestionar el portal de anfitriona.
+                {tAuth.loginSubtitle}
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -121,7 +123,7 @@ export function LoginModal({
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Correo electrónico"
+                  placeholder={tAuth.emailPlaceholder}
                   className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
@@ -131,7 +133,7 @@ export function LoginModal({
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Contraseña"
+                  placeholder={tAuth.passwordPlaceholder}
                   className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
@@ -141,7 +143,7 @@ export function LoginModal({
                 disabled={loading}
                 className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70 shadow-sm"
               >
-                {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                {loading ? tAuth.signingIn : tAuth.signInButton}
               </button>
             </form>
 
@@ -151,7 +153,7 @@ export function LoginModal({
                   <div className="w-full border-t border-[rgba(63,67,77,0.1)]"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[#FBF7EC] text-[#6E727C] text-xs">O continúa con</span>
+                  <span className="px-2 bg-[#FBF7EC] text-[#6E727C] text-xs">{tAuth.orContinueWith}</span>
                 </div>
               </div>
 
@@ -183,12 +185,12 @@ export function LoginModal({
 
             <div className="mt-4 flex flex-col items-center gap-2 text-xs">
               <button onClick={() => setMode('reset')} className="text-[#6E727C] hover:text-[#3F434D]">
-                ¿Olvidaste tu contraseña?
+                {tAuth.forgotPassword}
               </button>
               <div className="text-[#6E727C]">
-                ¿No tienes cuenta?{' '}
+                {tAuth.noAccount}{' '}
                 <button onClick={() => setMode('register')} className="text-[#A7AB5E] font-semibold hover:underline">
-                  Registrarse
+                  {tAuth.signUpButton}
                 </button>
               </div>
             </div>
@@ -199,10 +201,10 @@ export function LoginModal({
           <>
             <div className="text-center mb-6">
               <h2 className="font-display font-light text-3xl text-[#3F434D]">
-                Únete a <span className="italic font-medium text-[#A7AB5E]">Mila</span>
+                {tAuth.registerTitle} <span className="italic font-medium text-[#A7AB5E]">Mila</span>
               </h2>
               <p className="text-[#6E727C] mt-2 text-xs leading-relaxed">
-                Crea una cuenta para solicitar estancias y chatear con la anfitriona.
+                {tAuth.registerSubtitle}
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -211,7 +213,7 @@ export function LoginModal({
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Correo electrónico"
+                  placeholder={tAuth.emailPlaceholder}
                   className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
@@ -221,7 +223,7 @@ export function LoginModal({
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Contraseña (mínimo 6 caracteres)"
+                  placeholder={tAuth.passwordMinPlaceholder}
                   className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
@@ -231,7 +233,7 @@ export function LoginModal({
                 disabled={loading}
                 className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70 shadow-sm"
               >
-                {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+                {loading ? tAuth.creatingAccount : tAuth.signUpButton}
               </button>
             </form>
 
@@ -241,7 +243,7 @@ export function LoginModal({
                   <div className="w-full border-t border-[rgba(63,67,77,0.1)]"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-[#FBF7EC] text-[#6E727C] text-xs">O continúa con</span>
+                  <span className="px-2 bg-[#FBF7EC] text-[#6E727C] text-xs">{tAuth.orContinueWith}</span>
                 </div>
               </div>
 
@@ -272,9 +274,9 @@ export function LoginModal({
             </div>
 
             <div className="mt-4 text-center text-xs text-[#6E727C]">
-              ¿Ya tienes cuenta?{' '}
+              {tAuth.alreadyHaveAccount}{' '}
               <button onClick={() => setMode('login')} className="text-[#A7AB5E] font-semibold hover:underline">
-                Iniciar sesión
+                {tAuth.signInButton}
               </button>
             </div>
           </>
@@ -284,10 +286,10 @@ export function LoginModal({
           <>
             <div className="text-center mb-6">
               <h2 className="font-display font-light text-2xl text-[#3F434D]">
-                Recuperar Contraseña
+                {tAuth.resetTitle}
               </h2>
               <p className="text-[#6E727C] mt-2 text-xs leading-relaxed">
-                Introduce tu correo electrónico para recibir un enlace de restablecimiento.
+                {tAuth.resetSubtitle}
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -296,7 +298,7 @@ export function LoginModal({
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Correo electrónico"
+                  placeholder={tAuth.emailPlaceholder}
                   className="w-full bg-white border border-[rgba(63,67,77,0.1)] py-3 px-4 rounded-xl text-sm outline-none focus:border-[#3D7A95]"
                   required
                 />
@@ -306,12 +308,12 @@ export function LoginModal({
                 disabled={loading}
                 className="w-full bg-[#3F434D] text-[#FBF7EC] py-3 rounded-full font-medium hover:bg-[#A7AB5E] transition-colors mt-2 disabled:opacity-70 shadow-sm"
               >
-                {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+                {loading ? tAuth.sending : tAuth.resetButton}
               </button>
             </form>
             <div className="mt-4 text-center text-xs">
               <button onClick={() => setMode('login')} className="text-[#6E727C] hover:text-[#3F434D] font-medium">
-                Volver a Iniciar sesión
+                {tAuth.backToSignIn}
               </button>
             </div>
           </>

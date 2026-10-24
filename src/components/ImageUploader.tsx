@@ -51,10 +51,9 @@ function compressImage(file: File): Promise<string> {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
         resolve(dataUrl);
       };
-      img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
-      img.src = e.target?.result as string;
+      img.onerror = () => reject(new Error('Failed to load image'));
     };
-    reader.onerror = () => reject(new Error('Error al leer el archivo'));
+    reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
 }
@@ -155,7 +154,7 @@ export function ImageUploader({
       {/* Label and Helper Header */}
       <div className="flex items-center justify-between">
         <label className="text-[10px] font-bold uppercase tracking-widest text-[#6E727C]">
-          {label || t.tituloGaleria} ({images.length} {images.length === 1 ? 'foto' : 'fotos'})
+          {label || t.tituloGaleria} ({images.length} {images.length === 1 ? t.photoCountSingle : t.photoCountPlural})
         </label>
         <span className="text-[10px] text-[#A7AB5E] font-semibold">
           {helperText || t.primeraFotoPrincipal}
@@ -239,7 +238,7 @@ export function ImageUploader({
                 key={idx}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-[rgba(63,67,77,0.12)] bg-gray-100 shadow-sm"
               >
-                <img src={img} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                <img src={img} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
 
                 {/* Primary Tag */}
                 {idx === 0 && (
@@ -256,7 +255,7 @@ export function ImageUploader({
                       type="button"
                       onClick={() => handleSetPrimary(idx)}
                       className="p-1.5 rounded-full bg-white text-[#3D7A95] hover:bg-[#F5EFE0] transition-colors shadow"
-                      title="Establecer como foto principal de portada"
+                      title={t.setPrimaryTitle}
                     >
                       <Star className="h-3.5 w-3.5" />
                     </button>

@@ -57,15 +57,15 @@ export function StoryModal({ isOpen, onClose, onSave, initialStory }: StoryModal
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      setError('Por favor escribe un título para la historia.');
+      setError(t.errores.titulo);
       return;
     }
     if (!content.trim()) {
-      setError('Por favor redacta el contenido de la historia.');
+      setError(t.errores.contenido);
       return;
     }
     if (images.length === 0) {
-      setError('Por favor añade una foto de portada para este artículo.');
+      setError(t.errores.fotos);
       return;
     }
 
@@ -94,7 +94,7 @@ export function StoryModal({ isOpen, onClose, onSave, initialStory }: StoryModal
       readTime: initialStory?.readTime || calculateReadTime(content),
       publishedDate:
         initialStory?.publishedDate ||
-        new Date().toLocaleDateString('es-ES', {
+        new Date().toLocaleDateString('en-US', {
           month: 'long',
           day: 'numeric',
           year: 'numeric'
@@ -258,7 +258,7 @@ export function StoryModal({ isOpen, onClose, onSave, initialStory }: StoryModal
               type="submit"
               className="py-2.5 px-7 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-white hover:bg-[#888B47] shadow-md hover:shadow-lg transition-all"
             >
-              {isEdit ? tGen.guardarCambios : 'Publicar Historia'}
+              {isEdit ? tGen.guardarCambios : t.modalCrear}
             </button>
           </div>
         </form>

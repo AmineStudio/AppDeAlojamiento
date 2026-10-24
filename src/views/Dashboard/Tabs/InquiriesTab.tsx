@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageSquare, Send } from 'lucide-react';
 import { MessageInquiry } from '../../../types';
+import textos from '../../../content/textos.json';
 
 interface InquiriesTabProps {
   inquiries: MessageInquiry[];
@@ -17,20 +18,22 @@ export function InquiriesTab({
   inquiries, activeInquiryId, setActiveInquiryId, toggleInquiryRead,
   activeInquiry, replyText, setReplyText, handleSendReply
 }: InquiriesTabProps) {
+  const tInq = textos.panel.consultasTab;
+
   return (
     <div className="space-y-4 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h3 className="font-display font-medium text-2xl text-[#3F434D]">Conversaciones con Huéspedes</h3>
-          <p className="text-xs text-[#6E727C] mt-0.5">Responde directamente a los viajeros interesados en tus alojamientos.</p>
+          <h3 className="font-display font-medium text-2xl text-[#3F434D]">{tInq.title}</h3>
+          <p className="text-xs text-[#6E727C] mt-0.5">{tInq.subtitle}</p>
         </div>
       </div>
 
       {inquiries.length === 0 ? (
         <div className="bg-white border border-[rgba(63,67,77,0.08)] rounded-3xl p-12 text-center">
           <MessageSquare className="h-10 w-10 text-[#6E727C] mx-auto mb-3 opacity-60" />
-          <p className="text-sm font-medium text-[#3F434D]">No hay consultas registradas todavía.</p>
-          <p className="text-xs text-[#6E727C] mt-1">Los mensajes de viajeros aparecerán aquí.</p>
+          <p className="text-sm font-medium text-[#3F434D]">{tInq.emptyTitle}</p>
+          <p className="text-xs text-[#6E727C] mt-1">{tInq.emptySubtitle}</p>
         </div>
       ) : (
         <div className="bg-white border border-[rgba(63,67,77,0.06)] rounded-3xl overflow-hidden flex flex-col md:flex-row h-[600px] shadow-sm">
@@ -78,7 +81,7 @@ export function InquiriesTab({
                       : 'bg-[#E6BE7A] text-white'
                   }`}
                 >
-                  {activeInquiry.read ? 'Marcar No Leído' : 'Marcar Leído'}
+                  {activeInquiry.read ? tInq.markUnread : tInq.markRead}
                 </button>
               </div>
 
@@ -89,7 +92,7 @@ export function InquiriesTab({
                     className={`flex flex-col gap-1 ${msg.sender === 'host' ? 'items-end' : 'items-start'}`}
                   >
                     <span className={`text-[10px] uppercase font-bold text-[#6E727C] ${msg.sender === 'host' ? 'mr-2' : 'ml-2'}`}>
-                      {msg.sender === 'host' ? 'Tú (Mila)' : activeInquiry.guestName} • {msg.date}
+                      {msg.sender === 'host' ? tInq.youHost : activeInquiry.guestName} • {msg.date}
                     </span>
                     <div
                       className={`p-4 rounded-2xl max-w-[85%] text-sm font-light leading-relaxed ${
@@ -111,7 +114,7 @@ export function InquiriesTab({
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-                    placeholder="Responder al viajero..."
+                    placeholder={tInq.replyPlaceholder}
                     className="flex-1 bg-white border border-[rgba(63,67,77,0.1)] rounded-full px-4 py-3 text-sm focus:outline-none focus:border-[#3D7A95] transition-colors"
                   />
                   <button
@@ -125,7 +128,7 @@ export function InquiriesTab({
             </div>
           ) : (
             <div className="w-full md:w-2/3 flex items-center justify-center text-sm text-[#6E727C] bg-white">
-              Selecciona una conversación para responder.
+              {tInq.selectPrompt}
             </div>
           )}
         </div>

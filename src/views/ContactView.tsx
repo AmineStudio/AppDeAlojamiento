@@ -3,6 +3,7 @@ import { House, HostProfile } from '../types';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import textos from '../content/textos.json';
 
 interface ContactViewProps {
   houses?: House[];
@@ -24,6 +25,7 @@ export function ContactView(props: ContactViewProps) {
   const { houses: ctxHouses, hostProfile: ctxHostProfile, sendInquiry } = useData();
   const { user, triggerLoginModal } = useAuth();
   const { showToast } = useToast();
+  const tCont = textos.contact;
 
   const houses = props.houses || ctxHouses;
   const hostProfile = props.hostProfile || ctxHostProfile;
@@ -56,12 +58,12 @@ export function ContactView(props: ContactViewProps) {
     const finalName = name.trim() || (user ? user.name : '');
 
     if (!finalEmail || !finalName || !message.trim()) {
-      showToast('Por favor completa tu nombre, correo y mensaje.');
+      showToast(tCont.validationError);
       return;
     }
 
     if (!user) {
-      showToast('Debes iniciar sesión para enviar una consulta.');
+      showToast(tCont.loginError);
       triggerLoginModal('signin');
       return;
     }
@@ -70,7 +72,7 @@ export function ContactView(props: ContactViewProps) {
     const res = await sendInquiry(
       finalName,
       finalEmail,
-      selectedTargetHouse?.name || 'Alojamiento',
+      selectedTargetHouse?.name || 'Stay',
       subject.trim(),
       message.trim()
     );
@@ -78,9 +80,9 @@ export function ContactView(props: ContactViewProps) {
     if (res.success) {
       setSubject('');
       setMessage('');
-      showToast(`✉️ Mensaje enviado a ${hostProfile.name}. Te responderemos pronto.`);
+      showToast(tCont.successToast.replace('{name}', hostProfile.name));
     } else {
-      showToast('Error al enviar el mensaje: ' + (res.error || 'Error'));
+      showToast(tCont.errorToast + (res.error || 'Error'));
     }
   });
 
@@ -90,10 +92,14 @@ export function ContactView(props: ContactViewProps) {
         
         {/* Host bio & intro */}
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">Comunicación Directa</span>
-          <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">Contacta con {hostProfile.name}</h1>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#3D7A95] bg-[#CFE4EC] px-4 py-1.5 rounded-full">
+            {tCont.badge}
+          </span>
+          <h1 className="font-display font-light text-4xl sm:text-6xl text-[#3F434D] tracking-tight mt-6">
+            {tCont.heading.replace('{name}', hostProfile.name)}
+          </h1>
           <p className="text-sm font-light text-[#6E727C] leading-relaxed mt-4 mb-8">
-            ¿Tienes dudas sobre disponibilidad, estancias largas de nómadas o detalles de los alojamientos en Gran Canaria? Escríbenos directamente.
+            {tCont.subtitle}
           </p>
 
           <div className="flex gap-4 p-5 bg-[#F5EFE0] rounded-3xl border border-[rgba(63,67,77,0.06)] mb-6">
@@ -117,26 +123,26 @@ export function ContactView(props: ContactViewProps) {
 
         {/* Inquiry form block */}
         <div className="bg-white border border-[rgba(63,67,77,0.1)] rounded-3xl p-8 shadow-xl">
-          <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">Enviar un mensaje</h3>
-          <p className="text-xs text-[#6E727C] mb-6">Notificaremos a {hostProfile.name} y te responderemos lo antes posible.</p>
+          <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-2">{tCont.cardTitle}</h3>
+          <p className="text-xs text-[#6E727C] mb-6">{tCont.cardSubtitle.replace('{name}', hostProfile.name)}</p>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Tu nombre</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.nameLabel}</label>
                 <input 
                   type="text" 
-                  placeholder="Tu nombre completo" 
+                  placeholder={tCont.namePlaceholder} 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Tu correo electrónico</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.emailLabel}</label>
                 <input 
                   type="email" 
-                  placeholder="tu@correo.com" 
+                  placeholder={tCont.emailPlaceholder} 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
@@ -145,7 +151,7 @@ export function ContactView(props: ContactViewProps) {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Alojamiento de interés</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.stayLabel}</label>
               <select 
                 value={houseId}
                 onChange={(e) => setHouseId(e.target.value)}
@@ -158,10 +164,10 @@ export function ContactView(props: ContactViewProps) {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Asunto</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.subjectLabel}</label>
               <input 
                 type="text" 
-                placeholder="Ej. Consulta sobre disponibilidad y zona de trabajo" 
+                placeholder={tCont.subjectPlaceholder} 
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium"
@@ -169,9 +175,9 @@ export function ContactView(props: ContactViewProps) {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">Mensaje</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-[#6E727C] mb-1.5">{tCont.messageLabel}</label>
               <textarea 
-                placeholder="Cuéntale a la anfitriona lo que necesitas o las fechas que tienes en mente..." 
+                placeholder={tCont.messagePlaceholder} 
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="w-full bg-[#FBF7EC] border border-[rgba(63,67,77,0.08)] py-3 px-4 rounded-xl text-xs outline-none focus:border-[#3D7A95] font-medium min-h-[120px] resize-vertical"
@@ -182,7 +188,7 @@ export function ContactView(props: ContactViewProps) {
               onClick={handleSubmit}
               className="w-full py-3.5 bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] rounded-full text-xs font-semibold uppercase tracking-widest shadow-sm hover:shadow transition-all"
             >
-              Enviar consulta
+              {tCont.sendButton}
             </button>
           </div>
         </div>

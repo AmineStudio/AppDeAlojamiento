@@ -152,12 +152,18 @@ export function DashboardView(props: DashboardViewProps) {
     }
   });
 
+  const tPan = textos.panel;
+  const tCas = textos.casas;
+  const tHab = textos.habitaciones;
+  const tHis = textos.historias;
+  const tGen = textos.general;
+
   const onSaveHouse = props.onSaveHouse || (async (h: House, isEdit: boolean) => {
     const res = await saveHouse(h, isEdit);
     if (res.success) {
-      showToast(isEdit ? `Alojamiento "${h.name}" actualizado.` : `Alojamiento "${h.name}" creado con éxito.`);
+      showToast(isEdit ? tPan.toasts.houseUpdated.replace('{name}', h.name) : tPan.toasts.houseCreated.replace('{name}', h.name));
     } else {
-      showToast('Error al guardar: ' + (res.error || 'Error'));
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
     }
   });
 
@@ -165,18 +171,18 @@ export function DashboardView(props: DashboardViewProps) {
     const target = houses.find(h => h.id === hId);
     const res = await deleteHouse(hId);
     if (res.success) {
-      showToast(`Alojamiento "${target?.name || hId}" eliminado.`);
+      showToast(tPan.toasts.houseDeleted.replace('{name}', target?.name || hId));
     } else {
-      showToast('Error al eliminar: ' + (res.error || 'Error'));
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
     }
   });
 
   const onSaveRoom = props.onSaveRoom || (async (tHouseId: string, r: Room, isEdit: boolean, origHouseId?: string) => {
     const res = await saveRoom(tHouseId, r, isEdit, origHouseId);
     if (res.success) {
-      showToast(isEdit ? `Habitación "${r.name}" actualizada.` : `Habitación "${r.name}" creada con éxito.`);
+      showToast(isEdit ? tPan.toasts.roomUpdated.replace('{name}', r.name) : tPan.toasts.roomCreated.replace('{name}', r.name));
     } else {
-      showToast('Error al guardar: ' + (res.error || 'Error'));
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
     }
   });
 
@@ -184,18 +190,18 @@ export function DashboardView(props: DashboardViewProps) {
     const room = (roomsByHouse[hId] || []).find(r => r.id === rId);
     const res = await deleteRoom(hId, rId);
     if (res.success) {
-      showToast(`Habitación "${room?.name || rId}" eliminada.`);
+      showToast(tPan.toasts.roomDeleted.replace('{name}', room?.name || rId));
     } else {
-      showToast('Error al eliminar: ' + (res.error || 'Error'));
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
     }
   });
 
   const onSaveStory = props.onSaveStory || (async (s: BlogPost, isEdit: boolean) => {
     const res = await saveStory(s, isEdit);
     if (res.success) {
-      showToast(isEdit ? `Historia "${s.title}" actualizada.` : `Historia "${s.title}" publicada en el blog.`);
+      showToast(isEdit ? tPan.toasts.storyUpdated.replace('{name}', s.title) : tPan.toasts.storyCreated.replace('{name}', s.title));
     } else {
-      showToast('Error al guardar: ' + (res.error || 'Error'));
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
     }
   });
 
@@ -203,9 +209,9 @@ export function DashboardView(props: DashboardViewProps) {
     const story = blogPosts.find(b => b.id === sId);
     const res = await deleteStory(sId);
     if (res.success) {
-      showToast(`Historia "${story?.title || sId}" eliminada.`);
+      showToast(tPan.toasts.storyDeleted.replace('{name}', story?.title || sId));
     } else {
-      showToast('Error al eliminar: ' + (res.error || 'Error'));
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
     }
   });
 
@@ -216,9 +222,9 @@ export function DashboardView(props: DashboardViewProps) {
   const handleReplyInquiry = props.handleReplyInquiry || (async (id: string, msg: string, role: 'host' | 'guest') => {
     const res = await replyInquiry(id, msg, role);
     if (res.success) {
-      showToast('✉️ Respuesta enviada con éxito.');
+      showToast(tPan.toasts.replySent);
     } else {
-      showToast('Error al enviar respuesta: ' + (res.error || 'Error'));
+      showToast(textos.notificaciones.errorGuardar + (res.error ? `: ${res.error}` : ''));
     }
   });
 
@@ -230,11 +236,6 @@ export function DashboardView(props: DashboardViewProps) {
       showToast(textos.notificaciones.errorGuardar);
     }
   });
-  const tPan = textos.panel;
-  const tCas = textos.casas;
-  const tHab = textos.habitaciones;
-  const tHis = textos.historias;
-  const tGen = textos.general;
 
   // Modal states
   const [houseModalOpen, setHouseModalOpen] = useState(false);
@@ -344,7 +345,7 @@ export function DashboardView(props: DashboardViewProps) {
       title: house.name,
       warningNote:
         roomsCount > 0
-          ? `Nota: Este alojamiento cuenta con ${roomsCount} habitación(es) vinculada(s). Al eliminarlo, también se darán de baja.`
+          ? tPan.toasts.deleteHouseWarning.replace('{count}', String(roomsCount))
           : undefined
     });
     setDeleteModalOpen(true);
@@ -381,7 +382,7 @@ export function DashboardView(props: DashboardViewProps) {
       available: !targetRoom.available
     };
     onSaveRoom(houseId, updated, true, houseId);
-    showToast(`Habitación marcada como ${updated.available ? tHab.estadoDisponible : tHab.estadoOcupada}.`);
+    showToast(tPan.toasts.roomStatusChanged.replace('{status}', updated.available ? tHab.estadoDisponible : tHab.estadoOcupada));
   };
 
   // Gestión de historias
@@ -507,7 +508,7 @@ export function DashboardView(props: DashboardViewProps) {
             }`}
           >
             <Home className="h-4 w-4" />
-            <span className="hidden sm:inline">Alojamientos</span>
+            <span className="hidden sm:inline">{tPan.pestanas.casas}</span>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors ${
               dashActiveTab === 'casas' || dashActiveTab === 'listings' || dashActiveTab === 'habitaciones'
                 ? 'bg-white/20 text-white' : 'bg-[#FBF7EC] text-[#6E727C] group-hover:bg-[#F5EFE0]'

@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import textos from '../content/textos.json';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, triggerLoginModal } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const { showToast } = useToast();
 
@@ -20,7 +21,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   if (requiredRole && user.role !== requiredRole) {
     if (requiredRole === 'host') {
-      showToast('🔒 Debes tener cuenta de anfitriona para acceder a esta sección.');
+      showToast(textos.protectedRoute.hostOnly);
     }
     return <Navigate to="/" replace />;
   }

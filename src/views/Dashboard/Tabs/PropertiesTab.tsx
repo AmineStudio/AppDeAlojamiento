@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Search, Plus, MapPin, Bed, ExternalLink, Edit3, Trash2, Filter, Eye } from 'lucide-react';
 import { House, Room } from '../../../types';
+import textos from '../../../content/textos.json';
 
 interface PropertiesTabProps {
   tCas: any;
@@ -37,6 +38,10 @@ export function PropertiesTab({
   handleOpenCreateRoom, filteredRooms, handleToggleRoomAvailability,
   handleOpenEditRoom, handleTriggerDeleteRoom
 }: PropertiesTabProps) {
+  const tTab = textos.panel.propertiesTab;
+  const tSub = textos.subidaFotos;
+  const tHome = textos.home;
+
   return (
     <>
       <div className="space-y-6">
@@ -81,7 +86,7 @@ export function PropertiesTab({
                       </span>
                     )}
                     <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
-                      {house.images.length} {house.images.length === 1 ? 'foto' : 'fotos'}
+                      {house.images.length} {house.images.length === 1 ? tSub.photoCountSingle : tSub.photoCountPlural}
                     </span>
                   </div>
 
@@ -119,7 +124,7 @@ export function PropertiesTab({
                       ))}
                       {house.features.length > 3 && (
                         <span className="text-[10px] text-[#A7AB5E] font-semibold self-center">
-                          +{house.features.length - 3} más
+                          {tTab.moreFeatures.replace('{count}', String(house.features.length - 3))}
                         </span>
                       )}
                     </div>
@@ -133,7 +138,7 @@ export function PropertiesTab({
                       setDashActiveTab('habitaciones');
                     }}
                     className="py-1.5 px-3 bg-white border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] rounded-xl text-[10px] font-bold uppercase tracking-wider text-[#3D7A95] flex items-center gap-1 transition-colors"
-                    title="Ver y gestionar habitaciones de este alojamiento"
+                    title={tTab.viewRoomsOfHouse}
                   >
                     <Bed className="h-3 w-3" /> {tCas.verHabitaciones} ({houseRooms.length})
                   </button>
@@ -172,7 +177,7 @@ export function PropertiesTab({
           <div className="text-center py-16 bg-white rounded-3xl border border-[rgba(63,67,77,0.08)] p-8">
             <Home className="h-10 w-10 text-[#6E727C] mx-auto mb-3" />
             <h4 className="font-display font-medium text-lg text-[#3F434D] mb-1">{tGen.sinResultados}</h4>
-            <p className="text-xs text-[#6E727C] mb-4">Intenta cambiar la búsqueda o añade un nuevo alojamiento.</p>
+            <p className="text-xs text-[#6E727C] mb-4">{tTab.emptyHouses}</p>
             <button
               onClick={handleOpenCreateHouse}
               className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-white hover:bg-[#888B47]"
@@ -184,7 +189,7 @@ export function PropertiesTab({
       </div>
 
       <div className="space-y-6 mt-12 pt-12 border-t border-[rgba(63,67,77,0.08)]">
-        <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-4">Gestión de Habitaciones</h3>
+        <h3 className="font-display font-medium text-2xl text-[#3F434D] mb-4">{tTab.manageRooms}</h3>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-[rgba(63,67,77,0.08)] shadow-sm">
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <div className="flex items-center gap-2">
@@ -194,7 +199,7 @@ export function PropertiesTab({
                 onChange={(e) => setRoomHouseFilter(e.target.value)}
                 className="bg-[#FBF7EC] border border-[rgba(63,67,77,0.1)] py-2 px-3 rounded-xl text-xs font-semibold text-[#3F434D] outline-none"
               >
-                <option value="all">{tHab.filtroTodas} ({allRoomsList.length} hab.)</option>
+                <option value="all">{tHab.filtroTodas} ({allRoomsList.length} {tTab.roomsCountLabel})</option>
                 {houses.map((h) => (
                   <option key={h.id} value={h.id}>
                     {h.name} ({(roomsByHouse[h.id] || []).length})
@@ -251,7 +256,7 @@ export function PropertiesTab({
                           ? 'bg-emerald-500 text-white hover:bg-emerald-600'
                           : 'bg-stone-600 text-white hover:bg-stone-700'
                       }`}
-                      title="Clic para cambiar disponibilidad"
+                      title={tTab.toggleAvailability}
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-white"></span>
                       {room.available ? tHab.estadoDisponible : tHab.estadoOcupada}
@@ -259,7 +264,7 @@ export function PropertiesTab({
                   </div>
 
                   <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[9px] font-semibold px-2 py-0.5 rounded-full">
-                    {room.images.length} {room.images.length === 1 ? 'foto' : 'fotos'}
+                    {room.images.length} {room.images.length === 1 ? tSub.photoCountSingle : tSub.photoCountPlural}
                   </span>
                 </div>
 
@@ -270,7 +275,7 @@ export function PropertiesTab({
                     </h4>
                     <div className="text-right shrink-0">
                       <span className="font-display text-lg font-bold text-[#3F434D]">€{room.price}</span>
-                      <span className="text-[9px] text-[#6E727C] block font-semibold">/ noche</span>
+                      <span className="text-[9px] text-[#6E727C] block font-semibold">{tHome.perNight}</span>
                     </div>
                   </div>
 
@@ -298,7 +303,7 @@ export function PropertiesTab({
                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
                       room.available ? 'bg-emerald-500' : 'bg-gray-400'
                     }`}
-                    title="Alternar estado libre/ocupado"
+                    title={tTab.toggleAvailability}
                   >
                     <span
                       className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
@@ -339,7 +344,7 @@ export function PropertiesTab({
               {tGen.sinResultados}
             </h4>
             <p className="text-xs text-[#6E727C] mb-4">
-              Puedes añadir una nueva habitación asignándola a cualquiera de tus alojamientos.
+              {tTab.emptyRooms}
             </p>
             <button
               onClick={() => handleOpenCreateRoom()}

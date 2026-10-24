@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { House } from '../types';
 import { useData } from '../contexts/DataContext';
+import textos from '../content/textos.json';
 
 interface HomeViewProps {
   houses?: House[];
@@ -15,6 +16,7 @@ export function HomeView(props: HomeViewProps) {
   const navigate = useNavigate();
   const { houses: ctxHouses } = useData();
   const houses = props.houses || ctxHouses;
+  const tHome = textos.home;
 
   const onHouseClick = (id: string) => {
     if (props.handleHouseClick) {
@@ -46,24 +48,24 @@ export function HomeView(props: HomeViewProps) {
         <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
           <span className="inline-flex items-center gap-2 bg-white px-4 py-2 border border-[rgba(63,67,77,0.1)] rounded-full text-xs font-semibold uppercase tracking-widest text-[#3F434D] mb-6">
             <span className="h-2 w-2 rounded-full bg-[#A7AB5E] animate-ping"></span>
-            Estancias compartidas para nómadas y estudiantes
+            {tHome.badge}
           </span>
           
           <h1 className="font-display font-light text-5xl sm:text-7xl lg:text-8xl tracking-tight text-[#3F434D] leading-tight mb-8">
-            Vive donde el <br />
-            <span className="italic font-medium text-[#A7AB5E] underline decoration-wavy decoration-[#E6BE7A] underline-offset-8">Atlántico</span> te inspira.
+            {tHome.heroTitlePre} <br />
+            <span className="italic font-medium text-[#A7AB5E] underline decoration-wavy decoration-[#E6BE7A] underline-offset-8">{tHome.heroTitleHighlight}</span> {tHome.heroTitlePost}
           </h1>
 
           <p className="text-[#6E727C] text-lg sm:text-xl font-light leading-relaxed max-w-xl mb-10">
-            Alojamientos compartidos boutique en el corazón de Las Palmas y rincones tranquilos de Gran Canaria. Conexión de fibra de alta velocidad y comunidad internacional.
+            {tHome.heroSubtitle}
           </p>
 
           <div className="flex gap-4 flex-wrap justify-center mb-16">
             <a href="#stays" className="py-3 px-8 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] shadow-xl hover:shadow-2xl transition-all duration-300">
-              Ver Alojamientos
+              {tHome.ctaStays}
             </a>
             <button onClick={onBlogClick} className="py-3 px-8 rounded-full text-xs font-semibold uppercase tracking-wider bg-white text-[#3F434D] border border-[rgba(63,67,77,0.1)] hover:bg-[#F5EFE0] transition-all duration-300">
-              Leer Historias Locales
+              {tHome.ctaStories}
             </button>
           </div>
 
@@ -71,15 +73,15 @@ export function HomeView(props: HomeViewProps) {
           <div className="grid grid-cols-3 gap-8 sm:gap-16 border-t border-[rgba(63,67,77,0.08)] pt-12 w-full max-w-2xl">
             <div>
               <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#3D7A95] tracking-tight">{houses.length}</h5>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Alojamientos</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">{tHome.statStays}</p>
             </div>
             <div>
               <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#A7AB5E] tracking-tight">{avgRating}</h5>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Valoración Media</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">{tHome.statRating}</p>
             </div>
             <div>
               <h5 className="font-display text-3xl sm:text-4xl font-extrabold text-[#3F434D] tracking-tight">100%</h5>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">Esencia Canaria</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-[#6E727C] mt-2">{tHome.statEssence}</p>
             </div>
           </div>
         </div>
@@ -98,10 +100,12 @@ export function HomeView(props: HomeViewProps) {
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12 border-b border-[rgba(63,67,77,0.06)] pb-8">
             <div>
               <h2 className="font-display text-3xl sm:text-5xl font-light text-[#3F434D] tracking-tight">
-                Alojamientos de <span className="italic font-normal text-[#A7AB5E]">Mila</span>
+                {tHome.sectionTitlePre} <span className="italic font-normal text-[#A7AB5E]">Mila</span>
               </h2>
               <p className="text-sm text-[#6E727C] mt-2 max-w-md font-light">
-                {houses.length} {houses.length === 1 ? 'alojamiento' : 'alojamientos'} con un ambiente relajado y compartido. Cuidadosamente restaurados para convivir con comodidad y bienestar.
+                {tHome.sectionSubtitle
+                  .replace('{count}', String(houses.length))
+                  .replace('{staysLabel}', houses.length === 1 ? tHome.staysSingular : tHome.staysPlural)}
               </p>
             </div>
           </div>
@@ -141,7 +145,7 @@ export function HomeView(props: HomeViewProps) {
                   <div className="border-t border-[rgba(63,67,77,0.06)] pt-4 flex items-center justify-between">
                     <div className="flex items-baseline gap-1">
                       <span className="font-display text-xl font-bold text-[#3F434D]">{h.pricePerNight}€</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E727C]">/ noche</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#6E727C]">{tHome.perNight}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-[#3F434D]">

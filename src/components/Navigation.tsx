@@ -4,6 +4,7 @@ import { Menu, X, TrendingUp, Star, LogOut, MessageSquare } from 'lucide-react';
 import { MilaLogo } from './MilaLogo';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import textos from '../content/textos.json';
 
 interface NavigationProps {
   currentPage?: string;
@@ -23,6 +24,7 @@ export function Navigation(props: NavigationProps) {
   const location = useLocation();
   const { user: ctxUser, triggerLoginModal: ctxTriggerLoginModal, logout } = useAuth();
   const { showToast: ctxShowToast } = useToast();
+  const tNav = textos.nav;
 
   const user = props.user !== undefined ? props.user : ctxUser;
   const triggerLoginModal = props.triggerLoginModal || ctxTriggerLoginModal;
@@ -41,16 +43,16 @@ export function Navigation(props: NavigationProps) {
       await logout();
       setUserDropdownOpen(false);
       navigate('/');
-      showToast('Sesión cerrada correctamente.');
+      showToast(tNav.signOutSuccess);
     } catch (err: any) {
-      showToast(err.message || 'Error al cerrar sesión.');
+      showToast(err.message || tNav.signOutError);
     }
   });
 
   const onNav = (page: 'home' | 'detail' | 'blog' | 'contact' | 'dashboard' | 'inbox') => {
     if (page === 'dashboard') {
       if (!user || user.role !== 'host') {
-        showToast('🔒 Inicia sesión con la cuenta de anfitriona para acceder al panel.');
+        showToast(tNav.hostRestrictedToast);
         triggerLoginModal('signin');
         return;
       }
@@ -90,7 +92,7 @@ export function Navigation(props: NavigationProps) {
             <MilaLogo className="h-11 w-auto transform transition-all duration-300 group-hover:scale-105" />
             <div className="flex flex-col">
               <span className="font-display font-medium text-lg leading-4 tracking-wider uppercase text-[#3F434D]">M.I.L.A</span>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#3D7A95]">C🤍living</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-[#3D7A95]">{tNav.brandSubtitle}</span>
             </div>
           </div>
 
@@ -100,34 +102,34 @@ export function Navigation(props: NavigationProps) {
               onClick={() => onNav('home')} 
               className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isHomeActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
-              Alojamientos
+              {tNav.stays}
             </button>
             <button 
               onClick={() => onNav('blog')} 
               className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isBlogActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
-              Historias
+              {tNav.stories}
             </button>
             <button 
               onClick={() => onNav('contact')} 
               className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${isContactActive ? 'bg-[#3F434D] text-[#FBF7EC] shadow-md' : 'text-[#6E727C] hover:text-[#3F434D]'}`}
             >
-              Contacto
+              {tNav.contact}
             </button>
             {user && user.role === 'host' ? (
               <button 
                 onClick={() => onNav('dashboard')} 
                 className={`py-2 px-5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${isDashboardActive ? 'bg-[#A7AB5E] text-white shadow-md' : 'text-[#A7AB5E] font-bold hover:bg-[#F5EFE0]'}`}
               >
-                <span>👑</span> Panel de Anfitriona
+                <span>👑</span> {tNav.hostDashboard}
               </button>
             ) : (
               <button 
                 onClick={() => onNav('dashboard')} 
                 className="py-2 px-4 rounded-full text-[11px] font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] transition-all"
-                title="Acceso para la dueña / administradora"
+                title={tNav.hostAccessTitle}
               >
-                Anfitriona
+                {tNav.hostAccess}
               </button>
             )}
           </div>
@@ -138,10 +140,10 @@ export function Navigation(props: NavigationProps) {
               {!user ? (
                 <>
                   <button onClick={() => triggerLoginModal('signin')} className="text-xs font-semibold uppercase tracking-wider text-[#6E727C] hover:text-[#3F434D] py-2 px-4 transition-colors">
-                    Iniciar sesión
+                    {tNav.signIn}
                   </button>
                   <button onClick={() => triggerLoginModal('signup')} className="py-2.5 px-6 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#A7AB5E] text-[#FBF7EC] hover:bg-[#888B47] shadow-sm hover:shadow transition-all duration-200">
-                    Registrarse
+                    {tNav.signUp}
                   </button>
                 </>
               ) : (
@@ -156,7 +158,7 @@ export function Navigation(props: NavigationProps) {
                     <div className="flex flex-col">
                       <span className="text-xs font-semibold leading-3 text-[#3F434D]">{user.name}</span>
                       <span className="text-[9px] uppercase tracking-wider font-bold text-[#3D7A95]">
-                        {user.role === 'host' ? 'Anfitriona' : 'Huésped'}
+                        {user.role === 'host' ? tNav.roleHost : tNav.roleGuest}
                       </span>
                     </div>
                   </div>
@@ -165,21 +167,21 @@ export function Navigation(props: NavigationProps) {
                     <div className="absolute right-0 top-14 w-52 bg-[#FBF7EC] border border-[rgba(63,67,77,0.1)] rounded-2xl shadow-xl py-2 z-50 text-sm overflow-hidden">
                       {user.role === 'host' ? (
                         <button onClick={() => { onNav('dashboard'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                          <TrendingUp className="h-4 w-4 text-[#3D7A95]" /> Panel de Gestión
+                          <TrendingUp className="h-4 w-4 text-[#3D7A95]" /> {tNav.hostDashboard}
                         </button>
                       ) : (
                         <>
                           <button onClick={() => { onNav('inbox'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                            <MessageSquare className="h-4 w-4 text-[#3D7A95]" /> Mis Mensajes
+                            <MessageSquare className="h-4 w-4 text-[#3D7A95]" /> {tNav.myMessages}
                           </button>
                           <button onClick={() => { onNav('home'); setUserDropdownOpen(false); }} className="w-full text-left py-2.5 px-5 hover:bg-[#F5EFE0] flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                            <Star className="h-4 w-4 text-[#A7AB5E]" /> Escribir Reseña
+                            <Star className="h-4 w-4 text-[#A7AB5E]" /> {tNav.writeReview}
                           </button>
                         </>
                       )}
                       <div className="border-t border-[rgba(63,67,77,0.06)] my-1.5"></div>
                       <button onClick={executeSignOut} className="w-full text-left py-2.5 px-5 hover:bg-orange-50 text-[#888B47] flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
-                        <LogOut className="h-4 w-4" /> Cerrar sesión
+                        <LogOut className="h-4 w-4" /> {tNav.signOut}
                       </button>
                     </div>
                   )}
@@ -208,33 +210,33 @@ export function Navigation(props: NavigationProps) {
               onClick={() => onNav('home')} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
-              Alojamientos
+              {tNav.stays}
             </button>
             <button 
               onClick={() => onNav('blog')} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
-              Historias
+              {tNav.stories}
             </button>
             <button 
               onClick={() => onNav('contact')} 
               className="text-left text-sm font-semibold uppercase tracking-wider text-[#3F434D]"
             >
-              Contacto
+              {tNav.contact}
             </button>
             {user && user.role === 'host' ? (
               <button 
                 onClick={() => onNav('dashboard')} 
                 className="text-left text-sm font-bold uppercase tracking-wider text-[#A7AB5E] flex items-center gap-1.5"
               >
-                <span>👑</span> Panel de Anfitriona
+                <span>👑</span> {tNav.hostDashboard}
               </button>
             ) : (
               <button 
                 onClick={() => onNav('dashboard')} 
                 className="text-left text-sm font-semibold uppercase tracking-wider text-[#6E727C]"
               >
-                Acceso Anfitriona
+                {tNav.hostAccess}
               </button>
             )}
             
@@ -243,10 +245,10 @@ export function Navigation(props: NavigationProps) {
             {!user ? (
               <>
                 <button onClick={() => { triggerLoginModal('signin'); setMobileMenuOpen(false); }} className="text-left text-sm font-semibold uppercase tracking-wider text-[#6E727C]">
-                  Iniciar sesión
+                  {tNav.signIn}
                 </button>
                 <button onClick={() => { triggerLoginModal('signup'); setMobileMenuOpen(false); }} className="text-left text-sm font-semibold uppercase tracking-wider text-[#A7AB5E]">
-                  Registrarse
+                  {tNav.signUp}
                 </button>
               </>
             ) : (
@@ -258,27 +260,27 @@ export function Navigation(props: NavigationProps) {
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-[#3F434D]">{user.name}</span>
                     <span className="text-[10px] uppercase tracking-wider font-bold text-[#3D7A95]">
-                      {user.role === 'host' ? 'Anfitriona' : 'Huésped'}
+                      {user.role === 'host' ? tNav.roleHost : tNav.roleGuest}
                     </span>
                   </div>
                 </div>
                 
                 {user.role === 'host' ? (
                   <button onClick={() => onNav('dashboard')} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#3D7A95]">
-                    <TrendingUp className="h-4 w-4" /> Panel de Gestión
+                    <TrendingUp className="h-4 w-4" /> {tNav.hostDashboard}
                   </button>
                 ) : (
                   <>
                     <button onClick={() => onNav('inbox')} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#3D7A95]">
-                      <MessageSquare className="h-4 w-4" /> Mis Mensajes
+                      <MessageSquare className="h-4 w-4" /> {tNav.myMessages}
                     </button>
                     <button onClick={() => onNav('home')} className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#A7AB5E]">
-                      <Star className="h-4 w-4" /> Escribir Reseña
+                      <Star className="h-4 w-4" /> {tNav.writeReview}
                     </button>
                   </>
                 )}
                 <button onClick={executeSignOut} className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#888B47] mt-2">
-                  <LogOut className="h-4 w-4" /> Cerrar sesión
+                  <LogOut className="h-4 w-4" /> {tNav.signOut}
                 </button>
               </>
             )}
